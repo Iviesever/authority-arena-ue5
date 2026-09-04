@@ -35,6 +35,7 @@ $requiredFiles = @(
     'Config\DefaultEngine.ini',
     'Config\DefaultGame.ini',
     'Config\DefaultInput.ini',
+    '.gitattributes',
     'Source\AuthorityArena.Target.cs',
     'Source\AuthorityArenaEditor.Target.cs',
     'Source\AuthorityArenaServer.Target.cs',
