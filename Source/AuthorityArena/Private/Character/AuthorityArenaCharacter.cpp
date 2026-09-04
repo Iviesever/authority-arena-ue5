@@ -1,5 +1,6 @@
 #include "Character/AuthorityArenaCharacter.h"
 
+#include "Automation/AuthorityArenaAutomationDriver.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/InputComponent.h"
@@ -31,11 +32,11 @@ AAuthorityArenaCharacter::AAuthorityArenaCharacter()
     BodyMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
     BodyMesh->SetRelativeScale3D(FVector(0.72f, 0.72f, 1.0f));
 
-    static ConstructorHelpers::FObjectFinder<UStaticMesh> CapsuleMesh(
-        TEXT("/Engine/BasicShapes/Capsule.Capsule"));
-    if (CapsuleMesh.Succeeded())
+    static ConstructorHelpers::FObjectFinder<UStaticMesh> CylinderMesh(
+        TEXT("/Engine/BasicShapes/Cylinder.Cylinder"));
+    if (CylinderMesh.Succeeded())
     {
-        BodyMesh->SetStaticMesh(CapsuleMesh.Object);
+        BodyMesh->SetStaticMesh(CylinderMesh.Object);
     }
 
     CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
@@ -47,6 +48,8 @@ AAuthorityArenaCharacter::AAuthorityArenaCharacter()
     FollowCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("FollowCamera"));
     FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName);
     FollowCamera->bUsePawnControlRotation = false;
+
+    AutomationDriver = CreateDefaultSubobject<UAuthorityArenaAutomationDriver>(TEXT("AutomationDriver"));
 }
 
 void AAuthorityArenaCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)

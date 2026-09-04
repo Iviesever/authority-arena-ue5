@@ -5,6 +5,7 @@
 #include "AuthorityArenaCharacter.generated.h"
 
 class UCameraComponent;
+class UAuthorityArenaAutomationDriver;
 class USpringArmComponent;
 class UStaticMeshComponent;
 
@@ -32,4 +33,7 @@ private:
 
     UPROPERTY(VisibleAnywhere, Category = "Appearance")
     TObjectPtr<UStaticMeshComponent> BodyMesh;
+
+    UPROPERTY(VisibleAnywhere, Category = "Automation")
+    TObjectPtr<UAuthorityArenaAutomationDriver> AutomationDriver;
 };

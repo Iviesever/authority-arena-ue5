@@ -287,7 +287,7 @@ gh pr create --draft --base main --head feat/authority-arena-0.1 `
 - Unreliable Server RPC：`ServerReportViewSample(FRotator ViewRotation, uint32 Sequence)`，只写诊断、限速且永不影响命中/伤害。
 - Multicast 保留给已确认表现事件，不复制权威状态。
 
-- [ ] **Step 1：编写失败 UE Automation 测试**
+- [x] **Step 1：编写失败 UE Automation 测试**
 
 覆盖字段默认值/服务端 mutator、RepNotify helper 更新观察状态、重复重生门闩、无效 view sample 不污染 gameplay state。运行：
 
@@ -298,11 +298,11 @@ UnrealEditor-Cmd.exe AuthorityArena.uproject -unattended -nullrhi `
 
 预期：新测试因类型/行为缺失而失败。
 
-- [ ] **Step 2：实现最小复制与所有权边界**
+- [x] **Step 2：实现最小复制与所有权边界**
 
 使用 `DOREPLIFETIME`，所有写 API 在 `HasAuthority()` 不成立时 fail closed；Character 的移动只通过 CharacterMovement；PlayerState 保存跨 respawn 数据，Character 不复制分数真相。
 
-- [ ] **Step 3：运行 UE Automation GREEN**
+- [x] **Step 3：运行 UE Automation GREEN**
 
 重复 Step 1，预期全部 `AuthorityArena.Network` 通过且进程 exit 0。
 

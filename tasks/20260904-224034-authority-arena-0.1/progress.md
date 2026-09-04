@@ -140,3 +140,23 @@ Result: exit `1` at missing `CoreMinimal.h`. MQB does not reconstruct `.uproject
 - Draft PR: `https://github.com/Iviesever/authority-arena-ue5/pull/1`.
 - `gh pr view 1` verified `state=OPEN`, `isDraft=true`, base `main`, head `feat/authority-arena-0.1`, and `mergeStateStatus=CLEAN`.
 - PACT-00 is complete. Complex GAS work remains prohibited until this checkpoint; PACT-10 network foundations are next.
+
+## 2026-09-04 23:30 UTC+8 — PACT-10 replication RED/GREEN
+
+- RED: Editor build exited `6` because `ReplicationTests.cpp` referenced the missing diagnostics/GameState/PlayerState/PlayerController types.
+- Implemented replicated GameState match/run properties, replicated PlayerState identity/score/deaths, reliable Server respawn RPC, unreliable sequence-checked view sample RPC, reliable Client rejection RPC, and role diagnostics.
+- First compile exposed two UE 5.8 API mismatches: the test used nonexistent `GetReplicateMovement`, and PlayerState used deprecated direct `NetUpdateFrequency` access.
+- After changing to `IsReplicatingMovement()` and `SetNetUpdateFrequency()`, the identical Editor target succeeded without that warning.
+- UE Automation initially failed before discovery because a relative `.uproject` path was resolved from Engine binaries. The absolute-path rerun found exactly one `AuthorityArena.Network.ReplicationContract` test and reported Success.
+- Automation logs then exposed nonexistent `/Engine/BasicShapes/Capsule`; Engine content inspection showed Cylinder as the valid asset. After the minimal asset correction, `Run-Automation.ps1` reported `PASS ... succeeded=1` with no AuthorityArena CDO error.
+
+## 2026-09-04 23:40 UTC+8 — PACT-10 real process RED/GREEN
+
+- Runner RED: `RunMultiplayerScenario.ps1` did not exist.
+- Driver RED: Editor build exited `6` because `UAuthorityArenaAutomationDriver` did not exist.
+- After implementing the C++ driver, the reflection test and Editor build passed.
+- First server run listened on UDP port 60455 and emitted `ServerReady`, but the runner expected the wrong text `GameNetDriver Listening`; the actual UE 5.8 marker was `IpNetDriver listening on port`, so no clients were started and the server exited 0 by its timer.
+- With the corrected marker, run `427a705ac63b44c7b63ce3c394377202` used port 56264 and three distinct PIDs (server 28696, clients 37132/26360), all exit 0.
+- Both clients observed AutonomousProxy and SimulatedProxy. The server observed Authority and two connected IDs. Authoritative X positions were Client1 `61.17` from `-600` spawn and Client2 `145.17` from `600` spawn.
+- No UnrealEditor, UBT, ShaderCompileWorker, CrashReportClient, or LiveCodingConsole process remained.
+- This first pass was generated from an uncommitted worktree and is development evidence only. A clean feature-commit rerun is required before PACT-10 rows become PASS/source-bound.
