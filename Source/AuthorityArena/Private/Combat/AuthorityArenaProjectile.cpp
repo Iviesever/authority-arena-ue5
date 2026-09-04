@@ -7,6 +7,7 @@
 #include "Components/SphereComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "Diagnostics/AuthorityArenaNetworkDiagnosticsSubsystem.h"
+#include "Engine/Engine.h"
 #include "GameFramework/ProjectileMovementComponent.h"
 #include "UObject/ConstructorHelpers.h"
 
@@ -61,6 +62,14 @@ void AAuthorityArenaProjectile::MulticastImpact_Implementation(const FVector_Net
         this,
         TEXT("ProjectileImpact"),
         FString::Printf(TEXT("x=%.2f y=%.2f z=%.2f"), ImpactLocation.X, ImpactLocation.Y, ImpactLocation.Z));
+    if (GEngine != nullptr && GetNetMode() != NM_DedicatedServer)
+    {
+        GEngine->AddOnScreenDebugMessage(
+            -1,
+            1.25f,
+            FColor(255, 178, 48),
+            TEXT("PROJECTILE HIT // SERVER CONFIRMED"));
+    }
 }
 
 void AAuthorityArenaProjectile::OnSphereOverlap(

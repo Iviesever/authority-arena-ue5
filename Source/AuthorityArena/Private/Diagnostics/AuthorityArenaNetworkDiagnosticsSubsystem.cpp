@@ -104,7 +104,7 @@ void UAuthorityArenaNetworkDiagnosticsSubsystem::EmitEvent(
     {
         FScopeLock Lock(&RecentEventMutex);
         RecentEvents.Add(FString::Printf(TEXT("%s %s"), *EventName.ToString(), *Details));
-        constexpr int32 MaximumRecentEvents = 6;
+        constexpr int32 MaximumRecentEvents = 10;
         if (RecentEvents.Num() > MaximumRecentEvents)
         {
             RecentEvents.RemoveAt(0, RecentEvents.Num() - MaximumRecentEvents, EAllowShrinking::No);

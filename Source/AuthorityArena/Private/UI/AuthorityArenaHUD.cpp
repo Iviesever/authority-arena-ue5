@@ -39,7 +39,7 @@ void AAuthorityArenaHUD::DrawHUD()
     constexpr float PanelX = 18.0f;
     constexpr float PanelY = 18.0f;
     constexpr float PanelWidth = 460.0f;
-    constexpr float PanelHeight = 390.0f;
+    constexpr float PanelHeight = 520.0f;
     DrawRect(FLinearColor(0.015f, 0.02f, 0.035f, 0.88f), PanelX, PanelY, PanelWidth, PanelHeight);
 
     float Y = PanelY + 14.0f;
@@ -109,7 +109,24 @@ void AAuthorityArenaHUD::DrawHUD()
     for (FString Event : UAuthorityArenaNetworkDiagnosticsSubsystem::GetRecentEvents())
     {
         Event.LeftInline(70);
-        DrawText(FString::Printf(TEXT("- %s"), *Event), FLinearColor(0.76f, 0.80f, 0.88f), PanelX + 18.0f, Y, nullptr, 0.82f);
+        FLinearColor EventColor(0.76f, 0.80f, 0.88f);
+        if (Event.StartsWith(TEXT("DashPredicted")) || Event.StartsWith(TEXT("AttackPredicted")))
+        {
+            EventColor = FLinearColor(0.30f, 0.62f, 1.0f);
+        }
+        else if (Event.Contains(TEXT("Confirmed")))
+        {
+            EventColor = FLinearColor(0.28f, 0.92f, 0.60f);
+        }
+        else if (Event.Contains(TEXT("Rejected")) || Event.StartsWith(TEXT("Death")))
+        {
+            EventColor = FLinearColor(1.0f, 0.34f, 0.38f);
+        }
+        else if (Event.StartsWith(TEXT("ProjectileImpact")))
+        {
+            EventColor = FLinearColor(1.0f, 0.66f, 0.24f);
+        }
+        DrawText(FString::Printf(TEXT("- %s"), *Event), EventColor, PanelX + 18.0f, Y, nullptr, 0.82f);
         Y += 18.0f;
     }
 }
