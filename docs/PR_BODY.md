@@ -17,7 +17,7 @@ Final local delivery source: `eb03f031131d709b74a91a7f0c17216433e06b92`. Shippin
 
 Still required before Ready/merge:
 
-- Obtain green GitHub source-contract CI for the final evidence commit and complete the second independent read-only audit with no Blocker/High.
-- Only then mark Ready, merge normally, create the annotated tag, and publish a source-only Release whose custom `assets` array is empty.
+- Final source-contract CI is green. The second independent read-only audit returned Blocker 0 / High 0; its one screenshot-wording Medium was corrected to the exact capture SHA.
+- Mark Ready, merge normally, create the annotated tag, and publish a source-only Release whose custom `assets` array is empty.
 
 No binary or packaged artifact will be attached to the Release. If any P0 gate remains unproven, this PR stays Draft and the project remains Alpha/WIP.

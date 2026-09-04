@@ -371,3 +371,10 @@ Result: exit `1` at missing `CoreMinimal.h`. MQB does not reconstruct `.uproject
 - Development UAT also succeeded first attempt. 1,037,353,813 total bytes; game EXE SHA-256 `D3DF311ED9BF6159F641EFCFE96E004D633F730F9EACE782C206D9659CDC8240`; package fingerprint `5AC90E49C422D1A35102EC9305A38F2DFE31726FA7E243D1AA5FB9BE97E40B48`.
 - Packaged Combat `537df6c50af34aba88a12ecf5f1ce8c7`: report source SHA and package source SHA both exact `eb03f031`; three exit-0 processes, full Combat, final consistency 4/4. Clean-source report records owned survivors 0.
 - All first-audit findings now have clean evidence. A second independent audit and final CI remain before release.
+
+## 2026-09-05 05:05 UTC+8 — Second independent audit
+
+- Final evidence commit `d11a46c174d716cec44c45267ec54cd7065b15ca` pushed; push and PR source-contract CI both SUCCESS; worktree/remote HEAD matched and no AuthorityArena process remained.
+- Second fresh read-only audit: Blocker 0, High 0, Medium 1, Low 0. It independently re-read raw Editor and packaged finalConsistency 4/4; real GAS target and Flood JSONL; all Shipping 20 / Development 28 payload hashes; package fingerprints/game EXE hashes; exact source/package SHA; watchdog identities; CI/PR/tag/Release/tracked-binary state.
+- The one Medium was a stale phrase in `KNOWN_LIMITATIONS.md` calling the screenshot “current-source” despite its explicit capture SHA. It is corrected to capture-source `3611c5ff740706bc38680a2cb3c5b43bc94856d4`, matching metadata and acceptance matrix.
+- PACT-70.05 now satisfies the required no-Blocker/High gate. PR Ready/merge/tag/source-only Release remain and are not pre-marked complete.

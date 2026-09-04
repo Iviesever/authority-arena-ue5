@@ -58,11 +58,11 @@ Statuses are `NOT RUN`, `RED`, `PASS`, `FAIL`, or `N/A` with a reason. `PASS` re
 | PACT-70.02 | All required architecture/network/GAS/authority/test/build docs | PASS | Clean documentation verifier: 17 required portfolio/source-contract files |
 | PACT-70.03 | AI disclosure, walkthrough, interview guide and three live drills | PASS | Five exact disclosure statements, 15 interview topics and all three independent drills validated |
 | PACT-70.04 | Rollback versus UE replication comparison | PASS | Comparison covers goal, ownership, prediction, correction, bandwidth, determinism and use case; no rollback claim |
-| PACT-70.05 | Independent audit has no Blocker/High | FAIL | First final audit: Blocker 0, High 3, Medium 3; fixes and a new independent audit required |
+| PACT-70.05 | Independent audit has no Blocker/High | PASS | Second fresh read-only audit: Blocker 0, High 0, Medium 1; final screenshot wording Medium fixed immediately afterward |
 | PACT-70.06 | PR ready and merged with normal merge commit | NOT RUN | — |
 | PACT-70.07 | Annotated `v0.1.0` tag | NOT RUN | — |
 | PACT-70.08 | Non-draft source-only Release with empty custom assets | NOT RUN | — |
 
 ## Current release decision
 
-`NOT ELIGIBLE YET`: all first-audit High/Medium findings have clean reruns and exact-source package evidence, but PACT-70.05 remains failed until a second independent audit confirms Blocker/High zero. CI, PR Ready/merge, annotated tag and source-only Release remain mandatory.
+`RELEASE GATES GREEN; GITHUB OPERATIONS PENDING`: all P0 implementation, local/clean-source/package evidence, CI and independent audit gates pass. PR Ready/normal merge, annotated tag and source-only Release with empty custom assets must still complete before v0.1.0 may be declared finished.

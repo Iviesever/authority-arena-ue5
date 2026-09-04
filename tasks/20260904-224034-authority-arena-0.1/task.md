@@ -602,7 +602,7 @@ Core MQB tests、ProjectStructure、UE `AuthorityArena.*` Automation、headless�
 
 审计 Agent 禁止写仓库；按目标原文和 `ACCEPTANCE_MATRIX.md` 逐项检查 Git status、代码、命令、日志/JSON、截图、包 manifest、clean-source、PR/CI，按 Blocker/High/Medium/Low 输出带证据发现。
 
-- [ ] **Step 5：仅修复确认发现并全量重验**
+- [x] **Step 5：仅修复确认发现并全量重验**
 
 若有 Blocker/High，先写失败测试/复现，再最小修复；随后重新运行 Task 9 全矩阵并更新源 SHA/包哈希。若无法清零，不得发布，保持 Draft Alpha/WIP 并完成 handoff。
 

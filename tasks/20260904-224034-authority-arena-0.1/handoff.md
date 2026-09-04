@@ -2,8 +2,8 @@
 
 ## Current state
 
-- Active phase: first audit's 3 High/3 Medium findings are fixed and clean-verified; exact-source Shipping/Development packages and current matrices pass. Second independent audit is next.
-- Release eligibility: not eligible yet; PACT-70.05 second audit, final CI, merge, annotated tag, and source-only Release remain.
+- Active phase: all P0/local/clean/package/CI gates pass; second audit returned Blocker 0 / High 0 and its only Medium wording issue is fixed. GitHub release operations are next.
+- Release eligibility: eligible for PR Ready/normal merge; annotated tag and source-only Release still must be executed and verified before completion.
 - Remote repository: public `https://github.com/Iviesever/authority-arena-ue5`; `main` contains governance commit `acacf93d37dd246161b8b397c499b93acc031a68`.
 - Local repository: current branch `feat/authority-arena-0.1` tracks its same-name origin branch; it was created from `origin/main` at `e35df954166ff558b824ce41386c26a68f684d24`.
 - Production code: MQB-tested authority Core plus UE 5.8 C++ replication, CharacterMovement, native GAS, server validation/lifecycle, programmatic WorldBuilder, C++ HUD, JSONL diagnostics, and package verification.
@@ -18,7 +18,7 @@
 
 ## Next exact action
 
-Commit/push the final evidence summary, update the GitHub PR body, wait for CI, then dispatch a new independent read-only audit. If Blocker/High are zero, mark Ready and perform the normal merge/tag/source-only Release sequence.
+Commit/push the final audit wording/ledger, wait for CI, update the PR body, then mark Ready and perform the normal merge/tag/source-only Release sequence. Verify the Release custom assets array is empty.
 
 ## Safety boundary
 

@@ -8,7 +8,7 @@
 - The authority probes demonstrate validation boundaries and stable rejection reasons; they are not a claim of cheat-proof networking.
 - Projectile hit validation is current server collision, not lag-compensated rewind. No custom rollback protocol is implemented.
 - Iris, Network Prediction plugin integration, dormancy tuning, and relevancy/bandwidth experiments are intentionally outside P0.
-- The committed screenshot is real current-source viewport evidence, not a benchmark. Null-RHI scenario durations and UI ping/correction counters are observational.
+- The committed screenshot is real viewport evidence bound to capture source `3611c5ff740706bc38680a2cb3c5b43bc94856d4`, not the later delivery HEAD and not a benchmark. Null-RHI scenario durations and UI ping/correction counters are observational.
 - Network Insights trace generation is optional and no trace is committed. Large traces and all packages remain local and ignored.
 - The local NVIDIA 551.61 driver is deny-listed by UE 5.8 for D3D12 startup. Interactive verification explicitly uses D3D11; this does not claim D3D12 compatibility on that machine.
 - GitHub-hosted CI validates source/document contracts only because the hosted runner has neither the licensed UE 5.8 installation nor MQB 5.4. Full MQB, UBT, Automation, multi-process, and packaging gates are local and source-bound.
