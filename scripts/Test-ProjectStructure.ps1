@@ -143,5 +143,8 @@ foreach ($requiredPackageEvidence in @(
         throw "Package evidence is missing '$requiredPackageEvidence' generation or verification."
     }
 }
+if (-not $packageScript.Contains('ConflictingInstance', [StringComparison]::Ordinal)) {
+    throw 'Package runner is missing bounded UBT mutex teardown retry handling.'
+}
 
 Write-Output "PASS project-structure files=$($requiredFiles.Count + 1) engine=5.8"

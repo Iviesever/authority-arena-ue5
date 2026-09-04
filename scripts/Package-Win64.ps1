@@ -50,10 +50,25 @@ $arguments = @(
     "-archivedirectory=$OutputDirectory",
     '-utf8output'
 )
-& $ue.RunUat @arguments 2>&1 | Tee-Object -FilePath $uatLog
-$uatExitCode = $LASTEXITCODE
+$uatExitCode = -1
+$uatAttempt = 0
+foreach ($attempt in 1..2) {
+    $uatAttempt = $attempt
+    & $ue.RunUat @arguments 2>&1 | Tee-Object -FilePath $uatLog
+    $uatExitCode = $LASTEXITCODE
+    if ($uatExitCode -eq 0) {
+        break
+    }
+    $isTransientMutex = $attempt -eq 1 -and
+        (Select-String -LiteralPath $uatLog -SimpleMatch 'ConflictingInstance' -Quiet)
+    if (-not $isTransientMutex) {
+        throw "BuildCookRun failed with exit code $uatExitCode; see $uatLog"
+    }
+    Write-Warning 'UBT reported ConflictingInstance during its teardown window; retrying once after 3 seconds.'
+    Start-Sleep -Seconds 3
+}
 if ($uatExitCode -ne 0) {
-    throw "BuildCookRun failed with exit code $uatExitCode; see $uatLog"
+    throw "BuildCookRun failed after $uatAttempt attempts with exit code $uatExitCode; see $uatLog"
 }
 
 $allFiles = @(Get-ChildItem -LiteralPath $OutputDirectory -Recurse -File)
@@ -134,6 +149,7 @@ $manifest = [ordered]@{
         archive = $true
     }
     uatLog = $uatLog
+    uatAttempts = $uatAttempt
 }
 $manifest | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath $manifestPath -Encoding utf8NoBOM
 & (Join-Path $PSScriptRoot 'Verify-PackagedBuild.ps1') `

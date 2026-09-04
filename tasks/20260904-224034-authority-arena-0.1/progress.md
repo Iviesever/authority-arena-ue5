@@ -354,3 +354,11 @@ Result: exit `1` at missing `CoreMinimal.h`. MQB does not reconstruct `.uproject
 - High 3: final HEAD lacked exact-SHA clean/package evidence. Matrix rows remain RED until the audit fixes are committed and `Verify-CleanSource.ps1` produces new Shipping/Development packages from that commit.
 - Medium fixes: PACT-50 screenshot wording now binds exact capture SHA instead of current HEAD; watchdog report adds source SHA, dirty flag, UTC and three role/PID identities; handoff/matrix are synchronized. PR body will be updated after clean evidence.
 - Cold-start timing exposed fixed server lifetime racing late client startup. Normal scenarios now use a 40 s safety cap and authority exits 100 ms after both remote clients disconnect; ServerShutdown and Watchdog preserve their explicit behavior. Automation 3/3 and baseline Combat/AuthorityAbuse/AttackFlood are exploratory green; clean full rerun remains mandatory.
+
+## 2026-09-05 04:48 UTC+8 — Audit-fix full matrix and clean-package retry boundary
+
+- Clean commit `6c817e6fd1011b3944fd0f7be7de94d806494b01`: MQB 41, Editor/Game Development, Game Shipping and Automation 3/3 passed.
+- Five Combat profiles all passed with four final cross-process comparisons: Baseline `4a469d05`, Lag60 `c3d21771`, Lag120 `cd0de4af`, Jitter `ad7b47da`, Loss `af457860`.
+- Failure matrix 9/9 passed. Real target run `97a91235` and real GAS Flood run `83735311` passed. Three repeated baselines `d48cac0b`, `f584ca93`, `76ee9233` passed. Enhanced watchdog `63545926` and runner-contract watchdog `20e5625f` recorded exact source/dirty/UTC/role-PIDs and leak 0.
+- Exact-SHA clean clone rebuilt MQB and all three UBT targets, passed Automation and Editor Combat `094550ec`, then built/verified/ran the Shipping package. Shipping game EXE SHA-256 `C793E948494FBABAFF3DE9EE9184C27BFE4EB92153AC44F9728EE3F11444D551`; package fingerprint `B2F1130B5CF0062AEE0A9FFB8E4A06717D192417F42BA60BCBD95B1F4F503A7E`.
+- The immediately following Development UAT hit `ConflictingInstance` before Build because the global UBT mutex had not finished teardown. `Package-Win64.ps1` now retries exactly once after 3 seconds only when the captured UAT log explicitly contains `ConflictingInstance`; all other failures remain fail-fast. A new exact-SHA clean run is required.
