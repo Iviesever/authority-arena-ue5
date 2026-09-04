@@ -65,7 +65,10 @@ if ($null -eq $mainExecutable) {
     throw "BuildCookRun succeeded but no AuthorityArena executable exists under $OutputDirectory"
 }
 $gameExecutable = $allFiles |
-    Where-Object { $_.Name -like 'AuthorityArena-Win64-*.exe' } |
+    Where-Object {
+        $_.Name -like 'AuthorityArena*.exe' -and
+        $_.DirectoryName.EndsWith('\AuthorityArena\Binaries\Win64', [StringComparison]::OrdinalIgnoreCase)
+    } |
     Select-Object -First 1
 if ($null -eq $gameExecutable) {
     throw "BuildCookRun succeeded but no configuration-specific game executable exists under $OutputDirectory"
