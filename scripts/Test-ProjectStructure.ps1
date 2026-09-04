@@ -107,4 +107,17 @@ foreach ($requiredPackagedMultiplayerContract in @(
     }
 }
 
+$packageScript = Get-Content -LiteralPath (Join-Path $repositoryRoot 'scripts\Package-Win64.ps1') -Raw
+$packageVerifier = Get-Content -LiteralPath (Join-Path $repositoryRoot 'scripts\Verify-PackagedBuild.ps1') -Raw
+foreach ($requiredPackageEvidence in @(
+    'gameExecutableSha256',
+    'packageFingerprintSha256',
+    'payloadFiles'
+)) {
+    if (-not $packageScript.Contains($requiredPackageEvidence, [StringComparison]::Ordinal) -or
+        -not $packageVerifier.Contains($requiredPackageEvidence, [StringComparison]::Ordinal)) {
+        throw "Package evidence is missing '$requiredPackageEvidence' generation or verification."
+    }
+}
+
 Write-Output "PASS project-structure files=$($requiredFiles.Count + 1) engine=5.8"

@@ -22,6 +22,8 @@ $ue = & (Join-Path $PSScriptRoot 'Find-UE58.ps1')
 $processExecutable = $ue.EditorCmd
 $processPrefixArguments = @($projectPath)
 $packageExecutableSha256 = $null
+$gameExecutableSha256 = $null
+$packageFingerprintSha256 = $null
 $packageSourceSha = $null
 if ($Build -eq 'Packaged') {
     if ([string]::IsNullOrWhiteSpace($PackageManifest)) {
@@ -32,6 +34,8 @@ if ($Build -eq 'Packaged') {
     $processExecutable = $package.mainExecutable
     $processPrefixArguments = @()
     $packageExecutableSha256 = $package.mainExecutableSha256
+    $gameExecutableSha256 = $package.gameExecutableSha256
+    $packageFingerprintSha256 = $package.packageFingerprintSha256
     $packageSourceSha = $package.sourceSha
     if ($NetworkProfile -ne 'Baseline') {
         throw 'Packaged multi-process validation currently requires NetworkProfile Baseline so applied emulation can remain directly auditable.'
@@ -237,6 +241,8 @@ function Write-ExpectedFaultReport {
         result = 'PASS_EXPECTED_FAULT'
         expectedFault = $Fault
         packageExecutableSha256 = $packageExecutableSha256
+        gameExecutableSha256 = $gameExecutableSha256
+        packageFingerprintSha256 = $packageFingerprintSha256
         packageSourceSha = $packageSourceSha
         assertions = $Assertions
         processes = @(
@@ -690,6 +696,8 @@ try {
         port = $port
         result = 'PASS'
         packageExecutableSha256 = $packageExecutableSha256
+        gameExecutableSha256 = $gameExecutableSha256
+        packageFingerprintSha256 = $packageFingerprintSha256
         packageSourceSha = $packageSourceSha
         observations = [ordered]@{
             configuredLagMs = $network.lagMs

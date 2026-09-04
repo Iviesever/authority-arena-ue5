@@ -64,6 +64,12 @@ $mainExecutable = $allFiles |
 if ($null -eq $mainExecutable) {
     throw "BuildCookRun succeeded but no AuthorityArena executable exists under $OutputDirectory"
 }
+$gameExecutable = $allFiles |
+    Where-Object { $_.Name -like 'AuthorityArena-Win64-*.exe' } |
+    Select-Object -First 1
+if ($null -eq $gameExecutable) {
+    throw "BuildCookRun succeeded but no configuration-specific game executable exists under $OutputDirectory"
+}
 $pakFiles = @($allFiles | Where-Object Extension -eq '.pak')
 $utocFiles = @($allFiles | Where-Object Extension -eq '.utoc')
 $ucasFiles = @($allFiles | Where-Object Extension -eq '.ucas')
@@ -73,6 +79,24 @@ if ($pakFiles.Count -eq 0) {
 if ($utocFiles.Count -eq 0 -or $ucasFiles.Count -eq 0) {
     throw 'IoStore is enabled but .utoc/.ucas output is missing.'
 }
+
+$payloadFiles = @(
+    $allFiles |
+        Where-Object { $_.Extension -in @('.exe', '.dll', '.pak', '.utoc', '.ucas') } |
+        ForEach-Object {
+            [ordered]@{
+                relativePath = [System.IO.Path]::GetRelativePath($OutputDirectory, $_.FullName).Replace('\', '/')
+                bytes = [long]$_.Length
+                sha256 = (Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash
+            }
+        } |
+        Sort-Object relativePath
+)
+$fingerprintInput = ($payloadFiles | ForEach-Object {
+    "$($_.relativePath)|$($_.bytes)|$($_.sha256)"
+}) -join "`n"
+$packageFingerprintSha256 = [Convert]::ToHexString(
+    [Security.Cryptography.SHA256]::HashData([Text.Encoding]::UTF8.GetBytes($fingerprintInput)))
 
 $manifestPath = Join-Path $OutputDirectory 'package-manifest.json'
 $manifest = [ordered]@{
@@ -86,6 +110,11 @@ $manifest = [ordered]@{
     outputDirectory = $OutputDirectory
     mainExecutable = $mainExecutable.FullName
     mainExecutableSha256 = (Get-FileHash -LiteralPath $mainExecutable.FullName -Algorithm SHA256).Hash
+    gameExecutable = $gameExecutable.FullName
+    gameExecutableSha256 = (Get-FileHash -LiteralPath $gameExecutable.FullName -Algorithm SHA256).Hash
+    packageFingerprintSha256 = $packageFingerprintSha256
+    payloadBytes = [long](($payloadFiles | Measure-Object bytes -Sum).Sum)
+    payloadFiles = $payloadFiles
     totalBytes = [long](($allFiles | Measure-Object Length -Sum).Sum)
     fileCount = $allFiles.Count
     pakCount = $pakFiles.Count
