@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "sourceSha": "aef2a5e98094f53d99057c0d257bccb92ab13411",
+  "workingTreeDirty": false,
+  "scenario": "Combat",
+  "result": "PASS",
+  "deterministicTimingClaim": false,
+  "profiles": [
+    {"name":"Baseline","runId":"bf41312eec044a9096abc9379abcfc4a","lagMs":0,"varianceMs":0,"lossPercent":0,"wallClockMs":40077.46,"eventCounts":[48,25,17]},
+    {"name":"Lag60","runId":"0c69af47214a4981a8618fe5d4b1b399","lagMs":60,"varianceMs":0,"lossPercent":0,"wallClockMs":44079.93,"eventCounts":[48,25,18]},
+    {"name":"Lag120","runId":"81a159b163f247fe9077dd30fe8a6e35","lagMs":120,"varianceMs":0,"lossPercent":0,"wallClockMs":43912.71,"eventCounts":[48,26,17]},
+    {"name":"Jitter","runId":"58d8de0a086f48c1bf66bbe9c9a68312","lagMs":90,"varianceMs":30,"lossPercent":0,"wallClockMs":40190.81,"eventCounts":[48,26,17]},
+    {"name":"Loss","runId":"06bcba7a7cca49ae93d32b9f58eefa2c","lagMs":80,"varianceMs":15,"lossPercent":2,"wallClockMs":39841.06,"eventCounts":[48,25,18]}
+  ],
+  "functionalAssertionsForEveryProfile": [
+    "server plus two clients",
+    "Authority/AutonomousProxy/SimulatedProxy",
+    "Dash prediction and confirmation",
+    "server Projectile spawn/hit",
+    "Shield 34 to 17 mitigation",
+    "Death/Score/Respawn",
+    "three valid JSONL streams",
+    "bounded clean exit"
+  ]
+}

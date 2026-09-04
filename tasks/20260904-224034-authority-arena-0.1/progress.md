@@ -268,3 +268,14 @@ Result: exit `1` at missing `CoreMinimal.h`. MQB does not reconstruct `.uproject
 - GREEN run `473e6a64f1f3425eb18a381c369ebbab`: server/client1/client2 streams contained 35/13/12 validated events with exact RunId/role and monotonic sequence.
 - `Verify-ScenarioReport.ps1 -RequireClean` correctly rejected this dirty development report; non-clean verification passed.
 - PACT-40 implementation is ready to commit. A full clean network/failure/repeat matrix remains mandatory before PASS rows.
+
+## 2026-09-05 01:46 UTC+8 — PACT-40 final clean matrix
+
+- Source: `aef2a5e98094f53d99057c0d257bccb92ab13411`, dirty=false for all ordinary reports.
+- NetworkMatrix: Baseline, Lag60, Lag120, Jitter 90±30, and Loss 80±15 + 2% all passed identical full Combat and three-JSONL validation; every report passed strict SHA/clean verification.
+- FailureMatrix: ClientDisconnect, ServerShutdown, SecondClientConnectFail, DashRejected, AuthorityAbuse, AttackFlood, DeadAbility, DuplicateRespawn all passed strict report verification.
+- Watchdog child runner exited 1 on timeout; three logs preserved; exact RunId process leak count 0.
+- Three consecutive ConnectionMovement baselines passed with independent RunIds and ports 62232, 53192, 63922; each strict report verification passed.
+- Network timing/duration remains observation-only (`deterministicTimingClaim=false`).
+- Sanitized evidence: `docs/examples/network-matrix.json`, `docs/examples/failure-matrix.json`.
+- PACT-40 complete; PACT-50 visible diagnostics and screenshots are next.

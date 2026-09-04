@@ -450,23 +450,23 @@ GameplayEffect/Tag 表达持续状态，固定周期消耗 Energy；能量耗尽
 
 驱动器基于复制 MatchStart/PlayerId 排程移动、Dash、Shield、Attack、Death/Respawn；每个进程单独文件，按 sequence 追加。诊断 subsystem 串行化写入，flush 终态。
 
-- [ ] **Step 4：baseline 功能 GREEN**
+- [x] **Step 4：baseline 功能 GREEN**
 
 验证两个玩家连接、移动、Dash predicted/confirmed、Projectile、Shield、Death、Respawn、Score、三方最终快照一致。
 
-- [ ] **Step 5：网络矩阵 GREEN**
+- [x] **Step 5：网络矩阵 GREEN**
 
 依次运行 baseline、lag60、lag120、jitter、loss；功能断言必须相同。延迟、修正次数和调度时长只标记为观测值，不宣称确定性。
 
-- [ ] **Step 6：故障矩阵 GREEN**
+- [x] **Step 6：故障矩阵 GREEN**
 
 运行 client disconnect、server shutdown、second client fail、rejected ability、attack flood、invalid target、watchdog；每项期望非零/特定终态必须由 verifier 明确解释，保留失败日志。
 
-- [ ] **Step 7：重复运行与清理证明**
+- [x] **Step 7：重复运行与清理证明**
 
 baseline 连续至少三次；每次端口不同、runId 不同、结果通过；最后对本轮 PID 集合逐个证明不存在，不使用名称级 kill。
 
-- [ ] **Step 8：提交**
+- [x] **Step 8：提交**
 
 提交精简示例报告与文档，Artifacts 保持 ignored；提交 `test: add real multiprocess network matrix` 并 push。
 

@@ -35,13 +35,13 @@ Statuses are `NOT RUN`, `RED`, `PASS`, `FAIL`, or `N/A` with a reason. `PASS` re
 | PACT-30.02 | Client cannot forge damage or exceed attack rate | PASS | Clean AuthorityAbuse `ForgedDamage`; AttackFlood 1 accepted + 3 `RateLimited` |
 | PACT-30.03 | Energy/dead/target/respawn/RPC validation fails closed | PASS | Clean DashRejected, DeadAbility, AuthorityAbuse and DuplicateRespawn reports at `148a1b1` |
 | PACT-30.04 | Rejection is structured, non-mutating, non-crashing and convergent | PASS | Stable reason events, unchanged snapshots, predicted correction, all owned processes exit 0/leak 0 |
-| PACT-40.01 | PowerShell discovers UE, unique port, ready/connect/action/final workflow | NOT RUN | — |
-| PACT-40.02 | JSON from server and both clients verifies full combat lifecycle | NOT RUN | — |
-| PACT-40.03 | Cleanup owns exact processes and preserves unrelated processes | NOT RUN | — |
-| PACT-40.04 | Baseline, 60 ms, 120 ms, jitter, loss | NOT RUN | — |
-| PACT-40.05 | Client disconnect, server shutdown, client connect failure | NOT RUN | — |
-| PACT-40.06 | Rejection, attack flood, invalid target, timeout/watchdog | NOT RUN | — |
-| PACT-40.07 | Functional assertions separated from timing observations | NOT RUN | — |
+| PACT-40.01 | PowerShell discovers UE, unique port, ready/connect/action/final workflow | PASS | Clean matrices at `aef2a5e`; unique RunId/port, real listener/ready markers and bounded exits |
+| PACT-40.02 | JSON from server and both clients verifies full combat lifecycle | PASS | Three validated JSONL streams per profile plus `report.json`; event counts in `network-matrix.json` |
+| PACT-40.03 | Cleanup owns exact processes and preserves unrelated processes | PASS | PID/start/path identity; watchdog leak 0; unrelated `cookscope-ue5` process observed and untouched |
+| PACT-40.04 | Baseline, 60 ms, 120 ms, jitter, loss | PASS | Five clean full-Combat reports, strict verifier, `docs/examples/network-matrix.json` |
+| PACT-40.05 | Client disconnect, server shutdown, client connect failure | PASS | Clean ClientDisconnect and two `PASS_EXPECTED_FAULT` reports with C++ NetworkFailure exits |
+| PACT-40.06 | Rejection, attack flood, invalid target, timeout/watchdog | PASS | Clean failure matrix 9/9; watchdog runner exit 1, logs kept, owned leak 0 |
+| PACT-40.07 | Functional assertions separated from timing observations | PASS | Functional booleans separate from `observations`; every report sets `deterministicTimingClaim=false` |
 | PACT-50.01 | Distinct players and visible Health/Energy/Cooldown/roles/network data | NOT RUN | — |
 | PACT-50.02 | Visible Dash states, projectile, shield, death/respawn/score/events | NOT RUN | — |
 | PACT-50.03 | Real two-client screenshot from current SHA | NOT RUN | — |
