@@ -26,7 +26,6 @@ private:
 
     double StartTimeSeconds = 0.0;
     float MoveDurationSeconds = 2.0f;
-    float ExitAfterSeconds = 0.0f;
     float ViewSampleAccumulator = 0.0f;
     uint32 ViewSequence = 0;
     bool bAutoMove = false;
@@ -36,7 +35,6 @@ private:
     bool bMoveStarted = false;
     bool bMoveCompleted = false;
     bool bRoleSnapshotEmitted = false;
-    bool bExitRequested = false;
     bool bDashRequested = false;
     bool bSecondDashRequested = false;
     bool bShieldRequested = false;

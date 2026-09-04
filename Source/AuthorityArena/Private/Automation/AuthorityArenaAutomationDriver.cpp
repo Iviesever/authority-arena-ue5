@@ -1,7 +1,6 @@
 #include "Automation/AuthorityArenaAutomationDriver.h"
 
 #include "Ability/AuthorityArenaGameplayTags.h"
-#include "Ability/AuthorityArenaAttributeSet.h"
 #include "Character/AuthorityArenaCharacter.h"
 #include "Diagnostics/AuthorityArenaNetworkDiagnosticsSubsystem.h"
 #include "Engine/World.h"
@@ -40,9 +39,7 @@ void UAuthorityArenaAutomationDriver::BeginPlay()
     bDashOnly = FParse::Param(FCommandLine::Get(), TEXT("AuthorityDashOnly"));
     bAttackOnly = FParse::Param(FCommandLine::Get(), TEXT("AuthorityAttackOnly"));
     FParse::Value(FCommandLine::Get(), TEXT("AuthorityMoveDuration="), MoveDurationSeconds);
-    FParse::Value(FCommandLine::Get(), TEXT("AuthorityExitAfter="), ExitAfterSeconds);
     MoveDurationSeconds = FMath::Clamp(MoveDurationSeconds, 0.25f, 10.0f);
-    ExitAfterSeconds = FMath::Clamp(ExitAfterSeconds, 0.0f, 60.0f);
 }
 
 void UAuthorityArenaAutomationDriver::TickComponent(
@@ -126,9 +123,9 @@ void UAuthorityArenaAutomationDriver::TickCombat()
             {
                 RequestOnce(bSecondDashRequested, 0.55, AuthorityArenaTags::Ability_Dash, TEXT("DashRepeat"));
                 RequestOnce(bAttackOneRequested, 0.90, AuthorityArenaTags::Ability_Attack, TEXT("Attack1"));
-                RequestOnce(bAttackTwoRequested, 2.40, AuthorityArenaTags::Ability_Attack, TEXT("Attack2"));
-                RequestOnce(bAttackThreeRequested, 3.00, AuthorityArenaTags::Ability_Attack, TEXT("Attack3"));
-                RequestOnce(bAttackFourRequested, 3.60, AuthorityArenaTags::Ability_Attack, TEXT("Attack4"));
+                RequestOnce(bAttackTwoRequested, 3.00, AuthorityArenaTags::Ability_Attack, TEXT("Attack2"));
+                RequestOnce(bAttackThreeRequested, 4.00, AuthorityArenaTags::Ability_Attack, TEXT("Attack3"));
+                RequestOnce(bAttackFourRequested, 5.00, AuthorityArenaTags::Ability_Attack, TEXT("Attack4"));
             }
         }
     }
@@ -215,24 +212,4 @@ void UAuthorityArenaAutomationDriver::TickOwnedClient(
                 Location.Z));
     }
 
-    if (!bExitRequested &&
-        ExitAfterSeconds > 0.0f &&
-        ElapsedSeconds >= ExitAfterSeconds &&
-        Character->GetNetMode() == NM_Client)
-    {
-        bExitRequested = true;
-        const UAuthorityArenaAttributeSet* Attributes = PlayerState->GetAuthorityAttributeSet();
-        const FVector Location = Character->GetActorLocation();
-        UAuthorityArenaNetworkDiagnosticsSubsystem::EmitEvent(
-            this,
-            TEXT("ClientScenarioComplete"),
-            FString::Printf(
-                TEXT("player=%s x=%.2f y=%.2f health=%.2f energy=%.2f"),
-                *PlayerState->GetConnectionId(),
-                Location.X,
-                Location.Y,
-                Attributes ? Attributes->GetHealth() : -1.0f,
-                Attributes ? Attributes->GetEnergy() : -1.0f));
-        FGenericPlatformMisc::RequestExit(false);
-    }
 }

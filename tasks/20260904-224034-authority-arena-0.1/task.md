@@ -438,15 +438,15 @@ GameplayEffect/Tag 表达持续状态，固定周期消耗 Energy；能量耗尽
 - JSONL event fields：`schemaVersion, runId, processRole, pid, sequence, utc, event, playerId, authorityRole, payload`。
 - final report fields：source SHA、UE/MQB/toolchain versions、launch args（去敏）、port、scenario、assertions、process exit codes、cleanup result、final snapshots。
 
-- [ ] **Step 1：RED—Pester/PowerShell harness tests**
+- [x] **Step 1：RED—Pester/PowerShell harness tests**
 
 用受控短命测试进程验证唯一端口、Ready timeout、第二客户端失败、server 提前退出、client 中途退出、watchdog、PID 身份校验和 finally 清理。测试不得结束审计前已存在的进程。
 
-- [ ] **Step 2：实现有界进程拥有权**
+- [x] **Step 2：实现有界进程拥有权**
 
 记录 `Id/StartTime/Path/RunId`，清理前四项再次匹配；只对本轮集合调用 `Stop-Process -Id`，并等待退出。任何身份不匹配都记录为 cleanup failure，而不是扩大终止范围。
 
-- [ ] **Step 3：实现 AutomationDriver 与 JSONL**
+- [x] **Step 3：实现 AutomationDriver 与 JSONL**
 
 驱动器基于复制 MatchStart/PlayerId 排程移动、Dash、Shield、Attack、Death/Respawn；每个进程单独文件，按 sequence 追加。诊断 subsystem 串行化写入，flush 终态。
 

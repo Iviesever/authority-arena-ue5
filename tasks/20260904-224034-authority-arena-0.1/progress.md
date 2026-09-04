@@ -245,3 +245,26 @@ Result: exit `1` at missing `CoreMinimal.h`. MQB does not reconstruct `.uproject
 - Every scenario used three owned processes, all exit 0, owned PID leak count 0.
 - Sanitized combined evidence: `docs/examples/pact30-authority-report.json`.
 - PACT-30 complete; PACT-40 network/failure orchestration is next.
+
+## 2026-09-05 01:22 UTC+8 — PACT-40 network profiles exploratory runs
+
+- Added `NetworkProfile` with UE-source-confirmed `PktLag/PktLagVariance/PktLoss` command-line settings and log assertions.
+- Lag60 first failed because a 0.6 s attack spacing locally hit the replicated 0.45 s cooldown; widened attacks to 3/4/5 s. Lag60 then passed full Combat.
+- Lag120 first completed Combat but missed Client2 disconnect because the exit timer lived on the respawned Character and reset. Moved client process exit ownership to PlayerController; Lag120 then passed.
+- Jitter 90±30 ms passed full Combat.
+- Loss 80±15 ms + 2% completed all Combat assertions; the runner's unrelated 100 uu movement threshold failed on a partially corrected Dash. Removing that threshold only from Combat preserved Dash prediction/confirmation and produced a full Loss pass.
+
+## 2026-09-05 01:28 UTC+8 — PACT-40 process fault exploratory runs
+
+- ClientDisconnect, ServerShutdown and SecondClientConnectFail passed.
+- ServerShutdown and connection failure use a C++ GameInstance network-failure delegate and exit without standalone fallback.
+- Watchdog runner exited non-zero on its deadline; all three logs were preserved and the exact RunId had no remaining process.
+- `Test-Watchdog.ps1` and runner contract tests passed, including invalid-profile fail-closed behavior.
+
+## 2026-09-05 01:33 UTC+8 — Per-process JSONL RED/GREEN
+
+- RED: ConnectionMovement completed but `server.jsonl` did not exist.
+- Added locked JSONL append at the central diagnostics boundary and per-process role/path arguments.
+- GREEN run `473e6a64f1f3425eb18a381c369ebbab`: server/client1/client2 streams contained 35/13/12 validated events with exact RunId/role and monotonic sequence.
+- `Verify-ScenarioReport.ps1 -RequireClean` correctly rejected this dirty development report; non-clean verification passed.
+- PACT-40 implementation is ready to commit. A full clean network/failure/repeat matrix remains mandatory before PASS rows.

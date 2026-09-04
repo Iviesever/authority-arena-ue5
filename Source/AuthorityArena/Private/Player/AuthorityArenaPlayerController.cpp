@@ -25,6 +25,11 @@ void AAuthorityArenaPlayerController::BeginPlay()
         FCommandLine::Get(),
         TEXT("AuthorityRequestRespawnAfter="),
         AutomationRespawnRequestSeconds);
+    FParse::Value(
+        FCommandLine::Get(),
+        TEXT("AuthorityExitAfter="),
+        AutomationClientExitSeconds);
+    AutomationClientExitSeconds = FMath::Clamp(AutomationClientExitSeconds, 0.0f, 60.0f);
     bAuthorityAbuse = FParse::Param(FCommandLine::Get(), TEXT("AuthorityAbuse"));
     bAuthorityFlood = FParse::Param(FCommandLine::Get(), TEXT("AuthorityFlood"));
     bDuplicateRespawnAutomation =
@@ -40,6 +45,34 @@ void AAuthorityArenaPlayerController::Tick(const float DeltaSeconds)
     }
     TickRespawnAutomation();
     TickAuthorityProbeAutomation();
+    TickClientExitAutomation();
+}
+
+void AAuthorityArenaPlayerController::TickClientExitAutomation()
+{
+    if (bAutomationClientExitRequested || AutomationClientExitSeconds <= 0.0f ||
+        GetWorld()->GetTimeSeconds() - AutomationStartSeconds < AutomationClientExitSeconds)
+    {
+        return;
+    }
+
+    bAutomationClientExitRequested = true;
+    const AAuthorityArenaPlayerState* ArenaPlayerState = GetPlayerState<AAuthorityArenaPlayerState>();
+    const UAuthorityArenaAttributeSet* Attributes =
+        ArenaPlayerState != nullptr ? ArenaPlayerState->GetAuthorityAttributeSet() : nullptr;
+    const APawn* ControlledPawn = GetPawn();
+    const FVector Location = ControlledPawn != nullptr ? ControlledPawn->GetActorLocation() : FVector::ZeroVector;
+    UAuthorityArenaNetworkDiagnosticsSubsystem::EmitEvent(
+        this,
+        TEXT("ClientScenarioComplete"),
+        FString::Printf(
+            TEXT("player=%s x=%.2f y=%.2f health=%.2f energy=%.2f"),
+            ArenaPlayerState ? *ArenaPlayerState->GetConnectionId() : TEXT("Unknown"),
+            Location.X,
+            Location.Y,
+            Attributes ? Attributes->GetHealth() : -1.0f,
+            Attributes ? Attributes->GetEnergy() : -1.0f));
+    FGenericPlatformMisc::RequestExit(false);
 }
 
 void AAuthorityArenaPlayerController::TickRespawnAutomation()

@@ -43,6 +43,8 @@ $requiredFiles = @(
     'Source\AuthorityArena\Private\AuthorityArena.cpp',
     'Source\AuthorityArena\Public\Game\AuthorityArenaGameMode.h',
     'Source\AuthorityArena\Private\Game\AuthorityArenaGameMode.cpp',
+    'Source\AuthorityArena\Public\Game\AuthorityArenaGameInstance.h',
+    'Source\AuthorityArena\Private\Game\AuthorityArenaGameInstance.cpp',
     'Source\AuthorityArena\Public\Character\AuthorityArenaCharacter.h',
     'Source\AuthorityArena\Private\Character\AuthorityArenaCharacter.cpp',
     'Source\AuthorityArena\Public\World\AuthorityArenaWorldBuilder.h',
@@ -58,7 +60,8 @@ foreach ($relativePath in $requiredFiles) {
 $engineConfig = Get-Content -LiteralPath (Join-Path $repositoryRoot 'Config\DefaultEngine.ini') -Raw
 foreach ($requiredSetting in @(
     'GameDefaultMap=/Engine/Maps/Entry',
-    'GlobalDefaultGameMode=/Script/AuthorityArena.AuthorityArenaGameMode'
+    'GlobalDefaultGameMode=/Script/AuthorityArena.AuthorityArenaGameMode',
+    'GameInstanceClass=/Script/AuthorityArena.AuthorityArenaGameInstance'
 )) {
     if (-not $engineConfig.Contains($requiredSetting, [StringComparison]::Ordinal)) {
         throw "DefaultEngine.ini is missing '$requiredSetting'."
