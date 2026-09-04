@@ -22,6 +22,7 @@ protected:
 private:
     void TryEmitRoleSnapshot();
     void TickOwnedClient(float DeltaTime, double ElapsedSeconds);
+    void TickCombat();
 
     double StartTimeSeconds = 0.0;
     float MoveDurationSeconds = 2.0f;
@@ -29,8 +30,17 @@ private:
     float ViewSampleAccumulator = 0.0f;
     uint32 ViewSequence = 0;
     bool bAutoMove = false;
+    bool bCombat = false;
+    bool bDashOnly = false;
     bool bMoveStarted = false;
     bool bMoveCompleted = false;
     bool bRoleSnapshotEmitted = false;
     bool bExitRequested = false;
+    bool bDashRequested = false;
+    bool bSecondDashRequested = false;
+    bool bShieldRequested = false;
+    bool bAttackOneRequested = false;
+    bool bAttackTwoRequested = false;
+    bool bAttackThreeRequested = false;
+    bool bAttackFourRequested = false;
 };

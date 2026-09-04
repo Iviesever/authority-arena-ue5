@@ -346,27 +346,27 @@ UnrealEditor-Cmd.exe AuthorityArena.uproject -unattended -nullrhi `
 - Tags：`Ability.Dash`、`Ability.Attack`、`Ability.Shield`、`State.Dead`、`State.Stunned`、`State.Shield.Active`、`Cooldown.Dash`、`Cooldown.Attack`。
 - 三个 `UGameplayAbility` 子类由 C++ grant；Dash `LocalPredicted`，Attack 服务端生成 Projectile，Shield 以 replicated effect/tag 表达。
 
-- [ ] **Step 1：RED—Attribute/Effect 与能力拒绝测试**
+- [x] **Step 1：RED—Attribute/Effect 与能力拒绝测试**
 
 先写测试：damage 降低 Health 并钳制；shield 减伤；Dash 消耗 Energy/应用 cooldown；不足资源、dead/stunned 拒绝；Attack 不接受客户端 damage；ability spec 在 respawn 后存在且不重复 grant。
 
-- [ ] **Step 2：验证 RED**
+- [x] **Step 2：验证 RED**
 
 运行 `AuthorityArena.GAS` 测试组，确认因生产类型/行为缺失而失败，而不是测试注册错误。
 
-- [ ] **Step 3：GREEN—ASC/Attributes/Tags/Effects**
+- [x] **Step 3：GREEN—ASC/Attributes/Tags/Effects**
 
 实现复制属性与 `GAMEPLAYATTRIBUTE_REPNOTIFY`；`PostGameplayEffectExecute` 只在 authority 应用 IncomingDamage/Shield modifier 并钳制；native tags 启动注册；effects 在 C++ 构造且不依赖 GameplayEffect 蓝图。
 
-- [ ] **Step 4：GREEN—Dash**
+- [x] **Step 4：GREEN—Dash**
 
 使用 `LocalPredicted` 和支持网络预测的 Root Motion AbilityTask；cost/cooldown 由 GAS commit；拒绝时依赖 Prediction Key 回滚并记录 predicted/confirmed/rejected 三种事件。
 
-- [ ] **Step 5：GREEN—Projectile Attack**
+- [x] **Step 5：GREEN—Projectile Attack**
 
 服务器从权威 transform 和固定 tuning 生成复制 Projectile；碰撞仅服务器施加 GameplayEffect damage；`NetMulticast` 只播放已确认 impact 表现。
 
-- [ ] **Step 6：GREEN—Shield**
+- [x] **Step 6：GREEN—Shield**
 
 GameplayEffect/Tag 表达持续状态，固定周期消耗 Energy；能量耗尽/死亡/取消时移除。UI 只读取 ASC/Attributes。
 

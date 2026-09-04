@@ -5,6 +5,7 @@
 #include "AuthorityArenaGameMode.generated.h"
 
 class AAuthorityArenaPlayerController;
+class AAuthorityArenaCharacter;
 
 UCLASS()
 class AUTHORITYARENA_API AAuthorityArenaGameMode : public AGameModeBase
@@ -26,6 +27,7 @@ public:
 
     FTransform ChooseSpawnTransform(int32 PlayerIndex) const;
     void RequestRespawn(AAuthorityArenaPlayerController* Controller);
+    void HandleCharacterDeath(AAuthorityArenaCharacter* Character, AActor* DamageInstigator);
 
 private:
     void CaptureAutomationSnapshot();

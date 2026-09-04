@@ -1,14 +1,19 @@
 #include "Character/AuthorityArenaCharacter.h"
 
 #include "Automation/AuthorityArenaAutomationDriver.h"
+#include "Ability/AuthorityArenaAbilitySystemComponent.h"
+#include "Ability/AuthorityArenaGameplayTags.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/InputComponent.h"
 #include "Components/StaticMeshComponent.h"
+#include "Combat/AuthorityArenaCombatComponent.h"
+#include "Combat/AuthorityArenaHealthComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/Controller.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "UObject/ConstructorHelpers.h"
+#include "Player/AuthorityArenaPlayerState.h"
 
 AAuthorityArenaCharacter::AAuthorityArenaCharacter()
 {
@@ -50,6 +55,8 @@ AAuthorityArenaCharacter::AAuthorityArenaCharacter()
     FollowCamera->bUsePawnControlRotation = false;
 
     AutomationDriver = CreateDefaultSubobject<UAuthorityArenaAutomationDriver>(TEXT("AutomationDriver"));
+    CombatComponent = CreateDefaultSubobject<UAuthorityArenaCombatComponent>(TEXT("CombatComponent"));
+    HealthComponent = CreateDefaultSubobject<UAuthorityArenaHealthComponent>(TEXT("HealthComponent"));
 }
 
 void AAuthorityArenaCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -59,6 +66,46 @@ void AAuthorityArenaCharacter::SetupPlayerInputComponent(UInputComponent* Player
     PlayerInputComponent->BindAxis(TEXT("MoveRight"), this, &AAuthorityArenaCharacter::MoveRight);
     PlayerInputComponent->BindAxis(TEXT("Turn"), this, &AAuthorityArenaCharacter::Turn);
     PlayerInputComponent->BindAxis(TEXT("LookUp"), this, &AAuthorityArenaCharacter::LookUp);
+    PlayerInputComponent->BindAction(TEXT("Dash"), IE_Pressed, this, &AAuthorityArenaCharacter::ActivateDash);
+    PlayerInputComponent->BindAction(TEXT("Attack"), IE_Pressed, this, &AAuthorityArenaCharacter::ActivateAttack);
+    PlayerInputComponent->BindAction(TEXT("Shield"), IE_Pressed, this, &AAuthorityArenaCharacter::ActivateShield);
+}
+
+void AAuthorityArenaCharacter::PossessedBy(AController* NewController)
+{
+    Super::PossessedBy(NewController);
+    InitializeAbilitySystem();
+}
+
+void AAuthorityArenaCharacter::OnRep_PlayerState()
+{
+    Super::OnRep_PlayerState();
+    InitializeAbilitySystem();
+}
+
+UAbilitySystemComponent* AAuthorityArenaCharacter::GetAbilitySystemComponent() const
+{
+    const AAuthorityArenaPlayerState* ArenaPlayerState = GetPlayerState<AAuthorityArenaPlayerState>();
+    return ArenaPlayerState != nullptr ? ArenaPlayerState->GetAbilitySystemComponent() : nullptr;
+}
+
+void AAuthorityArenaCharacter::InitializeAbilitySystem()
+{
+    AAuthorityArenaPlayerState* ArenaPlayerState = GetPlayerState<AAuthorityArenaPlayerState>();
+    if (ArenaPlayerState == nullptr)
+    {
+        return;
+    }
+    UAuthorityArenaAbilitySystemComponent* AbilitySystem = ArenaPlayerState->GetAuthorityAbilitySystem();
+    if (AbilitySystem == nullptr)
+    {
+        return;
+    }
+    AbilitySystem->InitAbilityActorInfo(ArenaPlayerState, this);
+    if (HasAuthority())
+    {
+        AbilitySystem->GrantDefaultAbilities();
+    }
 }
 
 void AAuthorityArenaCharacter::MoveForward(const float Value)
@@ -87,4 +134,41 @@ void AAuthorityArenaCharacter::Turn(const float Value)
 void AAuthorityArenaCharacter::LookUp(const float Value)
 {
     AddControllerPitchInput(Value);
+}
+
+void AAuthorityArenaCharacter::ActivateDash()
+{
+    if (UAuthorityArenaAbilitySystemComponent* AbilitySystem =
+            Cast<UAuthorityArenaAbilitySystemComponent>(GetAbilitySystemComponent()))
+    {
+        AbilitySystem->TryActivateAbilityByTag(AuthorityArenaTags::Ability_Dash);
+    }
+}
+
+void AAuthorityArenaCharacter::ActivateAttack()
+{
+    if (UAuthorityArenaAbilitySystemComponent* AbilitySystem =
+            Cast<UAuthorityArenaAbilitySystemComponent>(GetAbilitySystemComponent()))
+    {
+        AbilitySystem->TryActivateAbilityByTag(AuthorityArenaTags::Ability_Attack);
+    }
+}
+
+void AAuthorityArenaCharacter::ActivateShield()
+{
+    if (UAuthorityArenaAbilitySystemComponent* AbilitySystem =
+            Cast<UAuthorityArenaAbilitySystemComponent>(GetAbilitySystemComponent()))
+    {
+        AbilitySystem->TryActivateAbilityByTag(AuthorityArenaTags::Ability_Shield);
+    }
+}
+
+bool AAuthorityArenaCharacter::TryActivateAbility(const FGameplayTag AbilityTag)
+{
+    if (UAuthorityArenaAbilitySystemComponent* AbilitySystem =
+            Cast<UAuthorityArenaAbilitySystemComponent>(GetAbilitySystemComponent()))
+    {
+        return AbilitySystem->TryActivateAbilityByTag(AbilityTag);
+    }
+    return false;
 }

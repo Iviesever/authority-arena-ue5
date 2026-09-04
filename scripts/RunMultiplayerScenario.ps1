@@ -1,6 +1,6 @@
 [CmdletBinding()]
 param(
-    [ValidateSet('ConnectionMovement', 'Lifecycle')]
+    [ValidateSet('ConnectionMovement', 'Lifecycle', 'Combat', 'DashRejected')]
     [string] $Scenario = 'ConnectionMovement',
 
     [ValidateRange(20, 180)]
@@ -162,12 +162,17 @@ try {
         '-nosplash',
         '-NoSound',
         '-Multiprocess',
+        '-ExecCmds=t.MaxFPS 60',
         "-AuthorityRunId=$runId"
     )
 
     $serverScenarioArguments = @()
+    $serverExitAfter = if ($Scenario -eq 'Combat') { 32 } else { 20 }
     if ($Scenario -eq 'Lifecycle') {
         $serverScenarioArguments += '-AuthorityLifecycle'
+    }
+    if ($Scenario -eq 'DashRejected') {
+        $serverScenarioArguments += '-AuthorityRejectDash'
     }
 
     $server = Start-OwnedProcess -Role 'Server' -Executable $ue.EditorCmd -Arguments (@(
@@ -175,7 +180,7 @@ try {
         '/Engine/Maps/Entry?listen',
         '-server',
         "-port=$port",
-        '-AuthorityExitAfter=20',
+        "-AuthorityExitAfter=$serverExitAfter",
         "-abslog=$serverLog"
     ) + $commonArguments + $serverScenarioArguments)
     $ownedProcesses.Add($server)
@@ -184,15 +189,26 @@ try {
         'AA_EVENT event=ServerReady'
     ) -Deadline $deadline
 
+    $clientExitAfter = if ($Scenario -eq 'Combat') { 16 } else { 8 }
+    $clientScenarioArguments = @()
+    if ($Scenario -eq 'Combat') {
+        $clientScenarioArguments += '-AuthorityCombat'
+    }
+    if ($Scenario -eq 'DashRejected') {
+        $clientScenarioArguments += '-AuthorityDashOnly'
+    }
+    $clientMovementArguments = @()
+    if ($Scenario -eq 'ConnectionMovement' -or $Scenario -eq 'Lifecycle') {
+        $clientMovementArguments += '-AuthorityAutoMove'
+        $clientMovementArguments += '-AuthorityMoveDuration=2'
+    }
     $client1 = Start-OwnedProcess -Role 'Client1' -Executable $ue.EditorCmd -Arguments (@(
         $projectPath,
         "127.0.0.1:$port`?PlayerId=Client1",
         '-game',
-        '-AuthorityAutoMove',
-        '-AuthorityMoveDuration=2',
-        '-AuthorityExitAfter=8',
+        "-AuthorityExitAfter=$clientExitAfter",
         "-abslog=$client1Log"
-    ) + $commonArguments)
+    ) + $commonArguments + $clientScenarioArguments + $clientMovementArguments)
     $ownedProcesses.Add($client1)
 
     $client2ScenarioArguments = @()
@@ -203,23 +219,20 @@ try {
         $projectPath,
         "127.0.0.1:$port`?PlayerId=Client2",
         '-game',
-        '-AuthorityAutoMove',
-        '-AuthorityMoveDuration=2',
-        '-AuthorityExitAfter=8',
+        "-AuthorityExitAfter=$clientExitAfter",
         "-abslog=$client2Log"
-    ) + $commonArguments + $client2ScenarioArguments)
+    ) + $commonArguments + $client2ScenarioArguments + $clientScenarioArguments + $clientMovementArguments)
     $ownedProcesses.Add($client2)
 
-    Wait-LogMarkers -OwnedProcess $client1 -LogPath $client1Log -Markers @(
+    $clientReadyMarkers = @(
         'local_role=AutonomousProxy',
-        'local_role=SimulatedProxy',
-        'AA_EVENT event=AutoMoveComplete'
-    ) -Deadline $deadline
-    Wait-LogMarkers -OwnedProcess $client2 -LogPath $client2Log -Markers @(
-        'local_role=AutonomousProxy',
-        'local_role=SimulatedProxy',
-        'AA_EVENT event=AutoMoveComplete'
-    ) -Deadline $deadline
+        'local_role=SimulatedProxy'
+    )
+    if ($Scenario -eq 'ConnectionMovement' -or $Scenario -eq 'Lifecycle') {
+        $clientReadyMarkers += 'AA_EVENT event=AutoMoveComplete'
+    }
+    Wait-LogMarkers -OwnedProcess $client1 -LogPath $client1Log -Markers $clientReadyMarkers -Deadline $deadline
+    Wait-LogMarkers -OwnedProcess $client2 -LogPath $client2Log -Markers $clientReadyMarkers -Deadline $deadline
 
     Wait-OwnedExit -OwnedProcess $client1 -Deadline $deadline
     Wait-OwnedExit -OwnedProcess $client2 -Deadline $deadline
@@ -244,8 +257,10 @@ try {
     Require-Text $serverText 'role=Authority' 'server observed authority roles'
     Require-Text $serverText 'event=PlayerDisconnected context=AuthorityArenaGameMode_0 player=Client1' 'Client1 disconnected cleanly'
     Require-Text $serverText 'event=PlayerDisconnected context=AuthorityArenaGameMode_0 player=Client2' 'Client2 disconnected cleanly'
-    Require-Text $client1Text 'event=AutoMoveComplete' 'Client1 completed movement input'
-    Require-Text $client2Text 'event=AutoMoveComplete' 'Client2 completed movement input'
+    if ($Scenario -eq 'ConnectionMovement' -or $Scenario -eq 'Lifecycle') {
+        Require-Text $client1Text 'event=AutoMoveComplete' 'Client1 completed movement input'
+        Require-Text $client2Text 'event=AutoMoveComplete' 'Client2 completed movement input'
+    }
     if ($client1Text.Contains('net_mode=Standalone', [StringComparison]::Ordinal) -or
         $client2Text.Contains('net_mode=Standalone', [StringComparison]::Ordinal)) {
         throw 'A client fell back into a standalone match after the authoritative server exited.'
@@ -266,6 +281,63 @@ try {
         $lifecycleAssertions.pawnDestroyed = $true
         $lifecycleAssertions.pawnRespawned = $true
     }
+    $combatAssertions = [ordered]@{
+        dashPredicted = $false
+        dashConfirmed = $false
+        projectileDamage = $false
+        shieldReducedDamage = $false
+        death = $false
+        respawn = $false
+        score = $false
+    }
+    if ($Scenario -eq 'Combat') {
+        Require-Text $client1Text 'event=DashPredicted' 'Client1 predicted Dash'
+        Require-Text $serverText 'event=DashConfirmed' 'server confirmed Dash'
+        Require-Text $serverText 'event=ProjectileSpawned' 'server spawned projectile'
+        Require-Text $client2Text 'event=ShieldPredicted' 'Client2 predicted Shield'
+        Require-Text $serverText 'event=ShieldConfirmed' 'server confirmed Shield'
+        Require-Text $serverText 'event=DamageApplied' 'server applied projectile damage'
+        Require-Text $serverText 'raw=34.00 applied=17.00 shield=true' 'shield halved projectile damage'
+        Require-Text $serverText 'event=Death context=AuthorityArenaGameMode_0 victim=Client2 instigator=Client1' 'server recorded Client2 death'
+        Require-Text $serverText 'event=Score' 'server updated score'
+        Require-Text $serverText 'player=Client1 score=1' 'Client1 received one point'
+        Require-Text $serverText 'event=Deaths' 'server updated death count'
+        Require-Text $serverText 'player=Client2 deaths=1' 'Client2 received one death'
+        Require-Text $serverText 'event=PawnRespawned context=AuthorityArenaGameMode_0 player=Client2' 'server respawned Client2 after death'
+        $combatAssertions.dashPredicted = $true
+        $combatAssertions.dashConfirmed = $true
+        $combatAssertions.projectileDamage = $true
+        $combatAssertions.shieldReducedDamage = $true
+        $combatAssertions.death = $true
+        $combatAssertions.respawn = $true
+        $combatAssertions.score = $true
+    }
+    $rejectionAssertions = [ordered]@{
+        clientPredicted = $false
+        serverRejected = $false
+        clientCorrected = $false
+    }
+    if ($Scenario -eq 'DashRejected') {
+        Require-Text $client1Text 'event=DashPredicted' 'Client1 predicted the dash before server response'
+        Require-Text $serverText 'event=DashRejectionArmed context=AuthorityArenaGameMode_0 player=Client1 reason=Failure.Resource' 'server armed a private rejection gate'
+        Require-Text $serverText 'event=AbilityRejected' 'server rejected the predicted dash'
+        Require-Text $serverText 'reasons=Failure.Resource' 'server used the expected rejection reason'
+        $clientFinal = [regex]::Match(
+            $client1Text,
+            'event=ClientScenarioComplete.*player=Client1 x=(-?\d+(?:\.\d+)?).*energy=(-?\d+(?:\.\d+)?)')
+        if (-not $clientFinal.Success) {
+            throw 'Unable to parse Client1 final corrected position and energy.'
+        }
+        $clientFinalX = [double]::Parse($clientFinal.Groups[1].Value, [Globalization.CultureInfo]::InvariantCulture)
+        $clientFinalEnergy = [double]::Parse($clientFinal.Groups[2].Value, [Globalization.CultureInfo]::InvariantCulture)
+        if ([Math]::Abs($clientFinalX - (-600.0)) -gt 30.0 -or
+            [Math]::Abs($clientFinalEnergy) -gt 0.01) {
+            throw "Predicted Dash did not correct to authority: x=$clientFinalX energy=$clientFinalEnergy"
+        }
+        $rejectionAssertions.clientPredicted = $true
+        $rejectionAssertions.serverRejected = $true
+        $rejectionAssertions.clientCorrected = $true
+    }
 
     $client1Position = [regex]::Match($serverText, 'event=AuthorityPosition.*player=Client1 x=(-?\d+(?:\.\d+)?)')
     $client2Position = [regex]::Match($serverText, 'event=AuthorityPosition.*player=Client2 x=(-?\d+(?:\.\d+)?)')
@@ -274,10 +346,11 @@ try {
     }
     $client1X = [double]::Parse($client1Position.Groups[1].Value, [Globalization.CultureInfo]::InvariantCulture)
     $client2X = [double]::Parse($client2Position.Groups[1].Value, [Globalization.CultureInfo]::InvariantCulture)
-    if ([Math]::Abs($client1X - (-600.0)) -lt 100.0) {
+    if ($Scenario -ne 'DashRejected' -and [Math]::Abs($client1X - (-600.0)) -lt 100.0) {
         throw "Client1 authoritative movement was too small: x=$client1X"
     }
-    if ([Math]::Abs($client2X - 600.0) -lt 100.0) {
+    if (($Scenario -eq 'ConnectionMovement' -or $Scenario -eq 'Lifecycle') -and
+        [Math]::Abs($client2X - 600.0) -lt 100.0) {
         throw "Client2 authoritative movement was too small: x=$client2X"
     }
 
@@ -300,8 +373,10 @@ try {
             authorityObserved = $true
             client1AuthorityX = $client1X
             client2AuthorityX = $client2X
-            movementOccurred = $true
+            movementOccurred = $Scenario -ne 'DashRejected'
             lifecycle = $lifecycleAssertions
+            combat = $combatAssertions
+            rejection = $rejectionAssertions
         }
         processes = @(
             [ordered]@{ role = $server.Role; pid = $server.Id; executable = $server.Executable; exitCode = $server.Process.ExitCode },

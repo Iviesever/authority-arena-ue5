@@ -1,6 +1,9 @@
 #include "Game/AuthorityArenaGameMode.h"
 
 #include "AuthorityArena.h"
+#include "Ability/AuthorityArenaAbilitySystemComponent.h"
+#include "Ability/AuthorityArenaAttributeSet.h"
+#include "Ability/AuthorityArenaGameplayTags.h"
 #include "Character/AuthorityArenaCharacter.h"
 #include "Diagnostics/AuthorityArenaNetworkDiagnosticsSubsystem.h"
 #include "EngineUtils.h"
@@ -121,7 +124,31 @@ void AAuthorityArenaGameMode::PostLogin(APlayerController* NewPlayer)
     {
         if (AAuthorityArenaGameState* ArenaGameState = GetGameState<AAuthorityArenaGameState>())
         {
+            if (ArenaGameState->GetScenarioStartServerTime() <= 0.0f)
+            {
+                ArenaGameState->SetScenarioStartServerTimeAuthority(
+                    ArenaGameState->GetServerWorldTimeSeconds() + 1.0f);
+            }
             ArenaGameState->MulticastMatchPulse(TEXT("PlayersReady"));
+        }
+        if (FParse::Param(FCommandLine::Get(), TEXT("AuthorityRejectDash")))
+        {
+            for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
+            {
+                AAuthorityArenaPlayerController* Controller =
+                    Cast<AAuthorityArenaPlayerController>(It->Get());
+                AAuthorityArenaPlayerState* PlayerState =
+                    IsValid(Controller) ? Controller->GetPlayerState<AAuthorityArenaPlayerState>() : nullptr;
+                if (PlayerState != nullptr && PlayerState->GetConnectionId() == TEXT("Client1"))
+                {
+                    PlayerState->GetAuthorityAbilitySystem()->ArmNextDashRejectionAuthority();
+                    UAuthorityArenaNetworkDiagnosticsSubsystem::EmitEvent(
+                        this,
+                        TEXT("DashRejectionArmed"),
+                        TEXT("player=Client1 reason=Failure.Resource"));
+                    break;
+                }
+            }
         }
         ScheduleAutomationLifecycle();
     }
@@ -157,7 +184,20 @@ void AAuthorityArenaGameMode::RestartPlayer(AController* NewPlayer)
         return;
     }
 
-    const FTransform SpawnTransform = ChooseSpawnTransform(NextSpawnIndex++);
+    int32 SpawnIndex = NextSpawnIndex++;
+    if (const AAuthorityArenaPlayerState* PlayerState =
+            NewPlayer->GetPlayerState<AAuthorityArenaPlayerState>())
+    {
+        if (PlayerState->GetConnectionId() == TEXT("Client1"))
+        {
+            SpawnIndex = 0;
+        }
+        else if (PlayerState->GetConnectionId() == TEXT("Client2"))
+        {
+            SpawnIndex = 1;
+        }
+    }
+    const FTransform SpawnTransform = ChooseSpawnTransform(SpawnIndex);
     RestartPlayerAtTransform(NewPlayer, SpawnTransform);
 }
 
@@ -210,6 +250,21 @@ void AAuthorityArenaGameMode::RequestRespawn(AAuthorityArenaPlayerController* Co
             {
                 return;
             }
+            if (AAuthorityArenaPlayerState* MutablePlayerState =
+                    StrongController->GetPlayerState<AAuthorityArenaPlayerState>())
+            {
+                if (UAuthorityArenaAbilitySystemComponent* AbilitySystem =
+                        MutablePlayerState->GetAuthorityAbilitySystem())
+                {
+                    AbilitySystem->RemoveLooseGameplayTag(AuthorityArenaTags::State_Dead);
+                    AbilitySystem->SetNumericAttributeBase(
+                        UAuthorityArenaAttributeSet::GetHealthAttribute(),
+                        MutablePlayerState->GetAuthorityAttributeSet()->GetMaxHealth());
+                    AbilitySystem->SetNumericAttributeBase(
+                        UAuthorityArenaAttributeSet::GetEnergyAttribute(),
+                        MutablePlayerState->GetAuthorityAttributeSet()->GetMaxEnergy());
+                }
+            }
             StrongController->ClearRespawnPendingAuthority();
             RestartPlayer(StrongController);
             const AAuthorityArenaPlayerState* PlayerState =
@@ -225,6 +280,57 @@ void AAuthorityArenaGameMode::RequestRespawn(AAuthorityArenaPlayerController* Co
         }),
         1.0f,
         false);
+}
+
+void AAuthorityArenaGameMode::HandleCharacterDeath(
+    AAuthorityArenaCharacter* Character,
+    AActor* DamageInstigator)
+{
+    if (!IsValid(Character) || !Character->HasAuthority())
+    {
+        return;
+    }
+    AAuthorityArenaPlayerController* VictimController =
+        Cast<AAuthorityArenaPlayerController>(Character->GetController());
+    AAuthorityArenaPlayerState* VictimState =
+        IsValid(VictimController) ? VictimController->GetPlayerState<AAuthorityArenaPlayerState>() : nullptr;
+    if (VictimState != nullptr)
+    {
+        VictimState->RecordDeathAuthority();
+        if (UAuthorityArenaAbilitySystemComponent* AbilitySystem = VictimState->GetAuthorityAbilitySystem())
+        {
+            AbilitySystem->AddLooseGameplayTag(AuthorityArenaTags::State_Dead);
+            AbilitySystem->CancelAllAbilities();
+        }
+    }
+
+    const AAuthorityArenaCharacter* InstigatorCharacter = Cast<AAuthorityArenaCharacter>(DamageInstigator);
+    AAuthorityArenaPlayerState* InstigatorState =
+        InstigatorCharacter != nullptr
+            ? InstigatorCharacter->GetPlayerState<AAuthorityArenaPlayerState>()
+            : nullptr;
+    if (InstigatorState != nullptr && InstigatorState != VictimState)
+    {
+        InstigatorState->AddScoreAuthority();
+    }
+
+    UAuthorityArenaNetworkDiagnosticsSubsystem::EmitEvent(
+        this,
+        TEXT("Death"),
+        FString::Printf(
+            TEXT("victim=%s instigator=%s"),
+            VictimState ? *VictimState->GetConnectionId() : TEXT("Unknown"),
+            InstigatorState ? *InstigatorState->GetConnectionId() : TEXT("World")));
+
+    if (VictimController != nullptr)
+    {
+        VictimController->UnPossess();
+    }
+    Character->Destroy();
+    if (VictimController != nullptr)
+    {
+        RequestRespawn(VictimController);
+    }
 }
 
 void AAuthorityArenaGameMode::ScheduleAutomationLifecycle()
@@ -279,17 +385,29 @@ void AAuthorityArenaGameMode::CaptureAutomationSnapshot()
         const AAuthorityArenaCharacter* Character = *It;
         const AAuthorityArenaPlayerState* PlayerState =
             Character->GetPlayerState<AAuthorityArenaPlayerState>();
+        const UAuthorityArenaAttributeSet* Attributes =
+            PlayerState != nullptr ? PlayerState->GetAuthorityAttributeSet() : nullptr;
+        const UAuthorityArenaAbilitySystemComponent* AbilitySystem =
+            PlayerState != nullptr ? PlayerState->GetAuthorityAbilitySystem() : nullptr;
         const FVector Location = Character->GetActorLocation();
         UAuthorityArenaNetworkDiagnosticsSubsystem::EmitEvent(
             this,
             TEXT("AuthorityPosition"),
             FString::Printf(
-                TEXT("player=%s x=%.2f y=%.2f z=%.2f role=%s"),
+                TEXT("player=%s x=%.2f y=%.2f z=%.2f role=%s health=%.2f energy=%.2f score=%d deaths=%d shield=%s dead=%s"),
                 PlayerState ? *PlayerState->GetConnectionId() : TEXT("Unknown"),
                 Location.X,
                 Location.Y,
                 Location.Z,
-                *UAuthorityArenaNetworkDiagnosticsSubsystem::DescribeRole(Character->GetLocalRole())));
+                *UAuthorityArenaNetworkDiagnosticsSubsystem::DescribeRole(Character->GetLocalRole()),
+                Attributes ? Attributes->GetHealth() : -1.0f,
+                Attributes ? Attributes->GetEnergy() : -1.0f,
+                PlayerState ? PlayerState->GetScoreValue() : -1,
+                PlayerState ? PlayerState->GetDeathCount() : -1,
+                AbilitySystem && AbilitySystem->HasMatchingGameplayTag(AuthorityArenaTags::State_Shield_Active)
+                    ? TEXT("true") : TEXT("false"),
+                AbilitySystem && AbilitySystem->HasMatchingGameplayTag(AuthorityArenaTags::State_Dead)
+                    ? TEXT("true") : TEXT("false")));
         ++SnapshotCount;
     }
     bAutomationSnapshotCaptured = SnapshotCount >= 2;

@@ -38,6 +38,7 @@ bool FAuthorityArenaReplicationContractTest::RunTest(const FString& Parameters)
     TestEqual(TEXT("Default match phase"), GameState->GetMatchPhase(), FName(TEXT("Waiting")));
     TestEqual(TEXT("Default match time"), GameState->GetRemainingSeconds(), 180);
     TestEqual(TEXT("Default round"), GameState->GetRoundNumber(), 1);
+    TestEqual(TEXT("Scenario start is unset by default"), GameState->GetScenarioStartServerTime(), 0.0f);
     TestTrue(TEXT("GameState replicates"), GameState->GetIsReplicated());
     TestTrue(TEXT("MatchPhase is RepNotify"), IsRepNotifyProperty(
         AAuthorityArenaGameState::StaticClass(), TEXT("MatchPhase")));
@@ -47,6 +48,8 @@ bool FAuthorityArenaReplicationContractTest::RunTest(const FString& Parameters)
         AAuthorityArenaGameState::StaticClass(), TEXT("ScenarioRunId")));
     TestTrue(TEXT("RoundNumber is RepNotify"), IsRepNotifyProperty(
         AAuthorityArenaGameState::StaticClass(), TEXT("RoundNumber")));
+    TestTrue(TEXT("ScenarioStartServerTime is RepNotify"), IsRepNotifyProperty(
+        AAuthorityArenaGameState::StaticClass(), TEXT("ScenarioStartServerTime")));
     TestTrue(TEXT("Match pulse is an unreliable multicast"), HasRpcFlags(
         AAuthorityArenaGameState::StaticClass(),
         TEXT("MulticastMatchPulse"),

@@ -17,11 +17,13 @@ public:
     FName GetMatchPhase() const { return MatchPhase; }
     int32 GetRemainingSeconds() const { return RemainingSeconds; }
     int32 GetRoundNumber() const { return RoundNumber; }
+    float GetScenarioStartServerTime() const { return ScenarioStartServerTime; }
     const FString& GetScenarioRunId() const { return ScenarioRunId; }
 
     bool SetMatchPhaseAuthority(FName NewPhase);
     bool SetRemainingSecondsAuthority(int32 NewRemainingSeconds);
     bool SetRoundNumberAuthority(int32 NewRoundNumber);
+    bool SetScenarioStartServerTimeAuthority(float NewStartTime);
     bool SetScenarioRunIdAuthority(const FString& NewRunId);
 
     UFUNCTION(NetMulticast, Unreliable)
@@ -40,6 +42,9 @@ private:
     UFUNCTION()
     void OnRep_RoundNumber();
 
+    UFUNCTION()
+    void OnRep_ScenarioStartServerTime();
+
     UPROPERTY(ReplicatedUsing = OnRep_MatchPhase)
     FName MatchPhase = TEXT("Waiting");
 
@@ -51,4 +56,7 @@ private:
 
     UPROPERTY(ReplicatedUsing = OnRep_RoundNumber)
     int32 RoundNumber = 1;
+
+    UPROPERTY(ReplicatedUsing = OnRep_ScenarioStartServerTime)
+    float ScenarioStartServerTime = 0.0f;
 };

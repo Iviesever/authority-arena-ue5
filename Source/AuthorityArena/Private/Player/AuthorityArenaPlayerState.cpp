@@ -1,5 +1,7 @@
 #include "Player/AuthorityArenaPlayerState.h"
 
+#include "Ability/AuthorityArenaAbilitySystemComponent.h"
+#include "Ability/AuthorityArenaAttributeSet.h"
 #include "Diagnostics/AuthorityArenaNetworkDiagnosticsSubsystem.h"
 #include "Net/UnrealNetwork.h"
 
@@ -7,6 +9,13 @@ AAuthorityArenaPlayerState::AAuthorityArenaPlayerState()
 {
     bReplicates = true;
     SetNetUpdateFrequency(30.0f);
+    AbilitySystemComponent = CreateDefaultSubobject<UAuthorityArenaAbilitySystemComponent>(TEXT("AbilitySystemComponent"));
+    AttributeSet = CreateDefaultSubobject<UAuthorityArenaAttributeSet>(TEXT("AttributeSet"));
+}
+
+UAbilitySystemComponent* AAuthorityArenaPlayerState::GetAbilitySystemComponent() const
+{
+    return AbilitySystemComponent;
 }
 
 void AAuthorityArenaPlayerState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const

@@ -1,8 +1,11 @@
 #include "Automation/AuthorityArenaAutomationDriver.h"
 
+#include "Ability/AuthorityArenaGameplayTags.h"
+#include "Ability/AuthorityArenaAttributeSet.h"
 #include "Character/AuthorityArenaCharacter.h"
 #include "Diagnostics/AuthorityArenaNetworkDiagnosticsSubsystem.h"
 #include "Engine/World.h"
+#include "Game/AuthorityArenaGameState.h"
 #include "Player/AuthorityArenaPlayerController.h"
 #include "Player/AuthorityArenaPlayerState.h"
 
@@ -33,6 +36,8 @@ void UAuthorityArenaAutomationDriver::BeginPlay()
     Super::BeginPlay();
     StartTimeSeconds = GetWorld() != nullptr ? GetWorld()->GetTimeSeconds() : 0.0;
     bAutoMove = FParse::Param(FCommandLine::Get(), TEXT("AuthorityAutoMove"));
+    bCombat = FParse::Param(FCommandLine::Get(), TEXT("AuthorityCombat"));
+    bDashOnly = FParse::Param(FCommandLine::Get(), TEXT("AuthorityDashOnly"));
     FParse::Value(FCommandLine::Get(), TEXT("AuthorityMoveDuration="), MoveDurationSeconds);
     FParse::Value(FCommandLine::Get(), TEXT("AuthorityExitAfter="), ExitAfterSeconds);
     MoveDurationSeconds = FMath::Clamp(MoveDurationSeconds, 0.25f, 10.0f);
@@ -55,6 +60,74 @@ void UAuthorityArenaAutomationDriver::TickComponent(
 
     const double ElapsedSeconds = GetWorld()->GetTimeSeconds() - StartTimeSeconds;
     TickOwnedClient(DeltaTime, ElapsedSeconds);
+    TickCombat();
+}
+
+void UAuthorityArenaAutomationDriver::TickCombat()
+{
+    if (!bCombat && !bDashOnly)
+    {
+        return;
+    }
+    AAuthorityArenaCharacter* Character = Cast<AAuthorityArenaCharacter>(GetOwner());
+    const AAuthorityArenaPlayerState* PlayerState =
+        Character != nullptr ? Character->GetPlayerState<AAuthorityArenaPlayerState>() : nullptr;
+    if (Character == nullptr || PlayerState == nullptr || PlayerState->GetConnectionId().IsEmpty())
+    {
+        return;
+    }
+
+    const AAuthorityArenaGameState* GameState = GetWorld()->GetGameState<AAuthorityArenaGameState>();
+    if (GameState == nullptr || GameState->GetScenarioStartServerTime() <= 0.0f)
+    {
+        return;
+    }
+    const double ElapsedSeconds =
+        GameState->GetServerWorldTimeSeconds() - GameState->GetScenarioStartServerTime();
+    if (ElapsedSeconds < 0.0)
+    {
+        return;
+    }
+
+    const FString& PlayerId = PlayerState->GetConnectionId();
+    auto RequestOnce = [this, Character, &PlayerId, ElapsedSeconds](
+        bool& bRequested,
+        const double AtSeconds,
+        const FGameplayTag AbilityTag,
+        const TCHAR* Action)
+    {
+        if (bRequested || ElapsedSeconds < AtSeconds)
+        {
+            return;
+        }
+        bRequested = true;
+        const bool bAccepted = Character->TryActivateAbility(AbilityTag);
+        UAuthorityArenaNetworkDiagnosticsSubsystem::EmitEvent(
+            this,
+            TEXT("AbilityInput"),
+            FString::Printf(
+                TEXT("player=%s action=%s accepted=%s"),
+                *PlayerId,
+                Action,
+                bAccepted ? TEXT("true") : TEXT("false")));
+    };
+
+    if (PlayerId == TEXT("Client1"))
+    {
+        RequestOnce(bDashRequested, 0.35, AuthorityArenaTags::Ability_Dash, TEXT("Dash"));
+        if (bCombat)
+        {
+            RequestOnce(bSecondDashRequested, 0.55, AuthorityArenaTags::Ability_Dash, TEXT("DashRepeat"));
+            RequestOnce(bAttackOneRequested, 0.90, AuthorityArenaTags::Ability_Attack, TEXT("Attack1"));
+            RequestOnce(bAttackTwoRequested, 2.40, AuthorityArenaTags::Ability_Attack, TEXT("Attack2"));
+            RequestOnce(bAttackThreeRequested, 3.00, AuthorityArenaTags::Ability_Attack, TEXT("Attack3"));
+            RequestOnce(bAttackFourRequested, 3.60, AuthorityArenaTags::Ability_Attack, TEXT("Attack4"));
+        }
+    }
+    else if (PlayerId == TEXT("Client2") && bCombat)
+    {
+        RequestOnce(bShieldRequested, 0.10, AuthorityArenaTags::Ability_Shield, TEXT("Shield"));
+    }
 }
 
 void UAuthorityArenaAutomationDriver::TryEmitRoleSnapshot()
@@ -140,10 +213,18 @@ void UAuthorityArenaAutomationDriver::TickOwnedClient(
         Character->GetNetMode() == NM_Client)
     {
         bExitRequested = true;
+        const UAuthorityArenaAttributeSet* Attributes = PlayerState->GetAuthorityAttributeSet();
+        const FVector Location = Character->GetActorLocation();
         UAuthorityArenaNetworkDiagnosticsSubsystem::EmitEvent(
             this,
             TEXT("ClientScenarioComplete"),
-            FString::Printf(TEXT("player=%s"), *PlayerState->GetConnectionId()));
+            FString::Printf(
+                TEXT("player=%s x=%.2f y=%.2f health=%.2f energy=%.2f"),
+                *PlayerState->GetConnectionId(),
+                Location.X,
+                Location.Y,
+                Attributes ? Attributes->GetHealth() : -1.0f,
+                Attributes ? Attributes->GetEnergy() : -1.0f));
         FGenericPlatformMisc::RequestExit(false);
     }
 }

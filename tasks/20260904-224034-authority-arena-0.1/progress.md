@@ -179,3 +179,26 @@ Result: exit `1` at missing `CoreMinimal.h`. MQB does not reconstruct `.uproject
 - Both client logs had zero standalone fallback. Final related-process inventory was empty.
 - Sanitized evidence: `docs/examples/pact10-connection-report.json` and `docs/examples/pact10-lifecycle-report.json`.
 - PACT-10 complete; PACT-20 native GAS is next.
+
+## 2026-09-05 00:18 UTC+8 — PACT-20 GAS contract RED/GREEN
+
+- RED: `AbilityTests.cpp` failed because ASC/AttributeSet/effects/ability/component/projectile types did not exist.
+- Added PlayerState-owned Mixed ASC/AttributeSet, three native ability specs, native gameplay tags, C++ GameplayEffects, predicted Root Motion Dash, authority Projectile, duration Shield, CombatComponent and HealthComponent.
+- UHT first failed because forward declarations were placed between `UCLASS()` and PlayerState; moving them above the macro fixed the root cause.
+- C++ then failed on a mixed `FVector_NetQuantize` ternary; normalizing to FVector and explicitly constructing the RPC value fixed it.
+- First GAS Automation crashed during GameplayEffect CDO construction because dynamic `FindOrAddComponent` called empty-name `NewObject`. Named `CreateDefaultSubobject` target-tag components fixed the crash.
+- `AuthorityArena.GAS.Contract` then passed. A separate damage RED added the missing `ComputeMitigatedDamage`; GREEN proves 34/17 Shield behavior and fail-closed negative/NaN inputs.
+
+## 2026-09-05 00:35 UTC+8 — PACT-20 Combat exploratory run
+
+- Early Combat runs proved ability activation but exposed unsynchronized local schedules, Dash plus auto-move overshoot, world/local projectile velocity double-rotation, and uncapped null-RHI saved-move warnings.
+- Added replicated `ScenarioStartServerTime`, stopped auto-walk in Combat, set projectile initial velocity to world space, used deferred server spawn, and capped test processes at 60 FPS.
+- Run `52d7edcffa6a41ac9429f0a8ff6a31b4` passed: Dash/Shield predicted and confirmed, four server Projectile spawns/impacts, first damage 34→17 with Shield, later Health 0, Client2 Deaths=1, Client1 Score=1, and server respawn. Saved-move warning count was 0.
+
+## 2026-09-05 00:45 UTC+8 — PACT-20 authority resource rejection exploratory run
+
+- RED contract required a default-off, server-only one-shot Dash rejection gate.
+- `DashRejected` uses actual authority state: the client predicts from Energy 100; server CanActivate changes Energy to 0 before cost validation, rejects with `Failure.Resource`, and GAS corrects predicted movement/resource.
+- Run `00180bf2b10a4cc58c878a20b11f3a8c` passed with final server/client Client1 `x=-600`, Energy `0`, three exit-0 owned PIDs.
+- A concurrently observed short-lived UnrealEditor-Cmd process was read-only identified as another project (`D:\program\cookscope-ue5`) and was not touched.
+- Both PACT-20 real runs were dirty development evidence. Commit and clean-source-bound reruns remain required.

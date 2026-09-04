@@ -1,11 +1,15 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "AbilitySystemInterface.h"
 #include "GameFramework/PlayerState.h"
 #include "AuthorityArenaPlayerState.generated.h"
 
+class UAuthorityArenaAbilitySystemComponent;
+class UAuthorityArenaAttributeSet;
+
 UCLASS()
-class AUTHORITYARENA_API AAuthorityArenaPlayerState : public APlayerState
+class AUTHORITYARENA_API AAuthorityArenaPlayerState : public APlayerState, public IAbilitySystemInterface
 {
     GENERATED_BODY()
 
@@ -13,6 +17,10 @@ public:
     AAuthorityArenaPlayerState();
 
     virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+    virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
+
+    UAuthorityArenaAbilitySystemComponent* GetAuthorityAbilitySystem() const { return AbilitySystemComponent; }
+    UAuthorityArenaAttributeSet* GetAuthorityAttributeSet() const { return AttributeSet; }
 
     const FString& GetConnectionId() const { return ConnectionId; }
     const FString& GetDisplayName() const { return DisplayName; }
@@ -24,6 +32,12 @@ public:
     bool RecordDeathAuthority();
 
 private:
+    UPROPERTY(VisibleAnywhere, Category = "Abilities")
+    TObjectPtr<UAuthorityArenaAbilitySystemComponent> AbilitySystemComponent;
+
+    UPROPERTY(VisibleAnywhere, Category = "Abilities")
+    TObjectPtr<UAuthorityArenaAttributeSet> AttributeSet;
+
     UFUNCTION()
     void OnRep_ConnectionId();
 
