@@ -20,7 +20,7 @@
 
 namespace
 {
-bool IsRepNotifyProperty(const UClass* Class, const FName PropertyName)
+bool IsAbilityRepNotifyProperty(const UClass* Class, const FName PropertyName)
 {
     const FProperty* Property = FindFProperty<FProperty>(Class, PropertyName);
     return Property != nullptr &&
@@ -54,9 +54,9 @@ bool FAuthorityArenaGasContractTest::RunTest(const FString& Parameters)
     TestEqual(TEXT("Default MaxHealth"), Attributes->GetMaxHealth(), 100.0f);
     TestEqual(TEXT("Default Energy"), Attributes->GetEnergy(), 100.0f);
     TestEqual(TEXT("Default MaxEnergy"), Attributes->GetMaxEnergy(), 100.0f);
-    TestTrue(TEXT("Health is RepNotify"), IsRepNotifyProperty(
+    TestTrue(TEXT("Health is RepNotify"), IsAbilityRepNotifyProperty(
         UAuthorityArenaAttributeSet::StaticClass(), TEXT("Health")));
-    TestTrue(TEXT("Energy is RepNotify"), IsRepNotifyProperty(
+    TestTrue(TEXT("Energy is RepNotify"), IsAbilityRepNotifyProperty(
         UAuthorityArenaAttributeSet::StaticClass(), TEXT("Energy")));
     TestEqual(TEXT("Unshielded damage is unchanged"),
         UAuthorityArenaAttributeSet::ComputeMitigatedDamage(34.0f, false), 34.0f);
