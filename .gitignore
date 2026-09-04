@@ -1,0 +1,27 @@
+# Unreal generated state
+.vs/
+.idea/
+Binaries/
+Build/
+DerivedDataCache/
+Intermediate/
+Saved/
+*.sln
+*.VC.db
+*.VC.opendb
+*.suo
+*.user
+*.userprefs
+*.opensdf
+*.sdf
+
+# Local build and verification artifacts
+.mqb/
+Artifacts/
+artifacts/
+
+# Local editor/system noise
+.vscode/
+.DS_Store
+Thumbs.db
+
