@@ -119,3 +119,10 @@ Result: exit `1` at missing `CoreMinimal.h`. MQB does not reconstruct `.uproject
 - `AuthorityArenaServer Win64 Development`: expected limitation, exit `6`, exact UE message `Server targets are not currently supported from this engine distribution.`
 - Contract fallback selected: separate Game/Editor process using `-server -nullrhi`, not described as a Dedicated Server target.
 - Final process audit after smoke: no UnrealEditor, UnrealEditor-Cmd, UBT, ShaderCompileWorker, CrashReportClient, or LiveCodingConsole process remained.
+
+## 2026-09-04 23:24 UTC+8 — PACT-00 source baseline pushed
+
+- Commit: `249ed563e6c84bbca24d191d6c049eb53ab94163` (`feat: establish UE 5.8 playable baseline`).
+- `git push origin main` exited `0`.
+- Local `HEAD` and `git ls-remote origin refs/heads/main` both returned that SHA.
+- Generated `.mqb/`, `Artifacts/`, `Binaries/`, `Intermediate/`, and `Saved/` remained ignored and were not committed.

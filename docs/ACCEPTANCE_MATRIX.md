@@ -16,7 +16,7 @@ Statuses are `NOT RUN`, `RED`, `PASS`, `FAIL`, or `N/A` with a reason. `PASS` re
 | PACT-00.05 | Shipping Game build | PASS | UBT `AuthorityArena Win64 Shipping`, current-source final exit 0 |
 | PACT-00.06 | Programmatic graybox requires no manual Editor clicks | PASS | Both smoke logs contain `AA_EVENT ArenaReady blocks=6`; C++ default subcomponents use Engine BasicShapes |
 | PACT-00.07 | Build/test scripts and governance contracts | PASS | RED exit 1 when verifier absent; GREEN `PASS contracts ... files=12` on 2026-09-04 |
-| PACT-00.08 | Real `main` baseline pushed | NOT RUN | — |
+| PACT-00.08 | Real `main` baseline pushed | PASS | Source commit `249ed563e6c84bbca24d191d6c049eb53ab94163`; local and `origin/main` matched |
 | PACT-00.09 | Feature branch from real `origin/main` | NOT RUN | — |
 | PACT-00.10 | Draft PR and factual progress | NOT RUN | — |
 | PACT-10.01 | One server and two independent clients | NOT RUN | — |

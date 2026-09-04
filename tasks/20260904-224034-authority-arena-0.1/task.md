@@ -174,7 +174,7 @@ mqb run Tests/AuthorityArenaCoreTests.cpp `
 
 在 UE 模块最小源文件产生后仅执行一次代表性 `mqb build`，验证 UHT generated header、Engine include、宏和链接语义。若失败，保存命令与第一根因，不循环伪造 include 参数；在 `BUILD_SYSTEM.md` 划定 MQB 负责 Core、UBT 负责 UE Target/UHT、RunUAT 负责 Cook/Package。
 
-- [ ] **Step 6：提交并推送**
+- [x] **Step 6：提交并推送**
 
 ```powershell
 git add Source/AuthorityArenaCore scripts/Test-Core.ps1 docs/BUILD_SYSTEM.md tasks/*/progress.md
