@@ -1,5 +1,7 @@
 # Network Model
 
+![Replication and authority flow](images/replication-flow.png)
+
 ## Runtime topology
 
 AuthorityArena uses Unreal's native client/server model. The installed Epic UE 5.8 distribution cannot build a `TargetType.Server` binary, so local evidence runs an independent `UnrealEditor-Cmd` Game process with `-server -nullrhi`. That process has `NM_DedicatedServer` runtime behavior, but the repository does not claim that a Dedicated Server target binary was built.

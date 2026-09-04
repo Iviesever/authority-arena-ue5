@@ -4,6 +4,8 @@
 
 AuthorityArena is an Unreal Engine 5.8 C++ server-authoritative multiplayer lab for a gameplay/networking portfolio. The final P0 scope is a real server plus two clients with native replication, GAS-predicted Dash, server-spawned Projectile Attack, replicated Shield, authoritative Health/Score/Death/Respawn, network emulation, automated negative paths, and packaged Win64 evidence.
 
+![Real UE 5.8 server plus two-client HUD evidence](docs/images/authority-arena-two-clients.png)
+
 Current verified baseline:
 
 - MQB 5.4 builds and runs the shared standard C++ authority core: 32 assertions pass and incremental cache hits are recorded.

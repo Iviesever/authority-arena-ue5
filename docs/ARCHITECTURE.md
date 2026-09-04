@@ -2,6 +2,8 @@
 
 The approved technical blueprint is [`implementation_plan.md`](../tasks/20260904-224034-authority-arena-0.1/implementation_plan.md). This document starts as the PACT-00 architecture contract and will be updated only when verified implementation differs.
 
+![AuthorityArena architecture](images/architecture.png)
+
 ```text
 PowerShell scenario runner
   -> owned server process
@@ -33,4 +35,3 @@ GameMode exists only on the server. GameState and PlayerState are server-written
 ## Dependency direction
 
 `AuthorityArenaCore` has no Unreal dependency. `AuthorityArena` depends on Core plus Engine, GameplayAbilities, GameplayTags, GameplayTasks, EnhancedInput, Json/JsonUtilities, Slate and UMG as required. PowerShell consumes process outputs but cannot mutate game state directly.
-

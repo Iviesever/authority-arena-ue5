@@ -1,5 +1,7 @@
 # Gameplay Ability System Design
 
+![Gameplay Ability System flow](images/gas-flow.png)
+
 ## Ownership and lifecycle
 
 `AAuthorityArenaPlayerState` owns the replicated `UAuthorityArenaAbilitySystemComponent` and `UAuthorityArenaAttributeSet`. The ASC uses `EGameplayEffectReplicationMode::Mixed`; PlayerState remains owned by its PlayerController and survives Pawn replacement. `AAuthorityArenaCharacter` is the avatar and implements `IAbilitySystemInterface` by returning the PlayerState ASC.

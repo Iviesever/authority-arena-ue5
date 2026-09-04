@@ -42,11 +42,11 @@ Statuses are `NOT RUN`, `RED`, `PASS`, `FAIL`, or `N/A` with a reason. `PASS` re
 | PACT-40.05 | Client disconnect, server shutdown, client connect failure | PASS | Clean ClientDisconnect and two `PASS_EXPECTED_FAULT` reports with C++ NetworkFailure exits |
 | PACT-40.06 | Rejection, attack flood, invalid target, timeout/watchdog | PASS | Clean failure matrix 9/9; watchdog runner exit 1, logs kept, owned leak 0 |
 | PACT-40.07 | Functional assertions separated from timing observations | PASS | Functional booleans separate from `observations`; every report sets `deterministicTimingClaim=false` |
-| PACT-50.01 | Distinct players and visible Health/Energy/Cooldown/roles/network data | NOT RUN | — |
-| PACT-50.02 | Visible Dash states, projectile, shield, death/respawn/score/events | NOT RUN | — |
-| PACT-50.03 | Real two-client screenshot from current SHA | NOT RUN | — |
-| PACT-50.04 | Architecture, replication and GAS diagrams | NOT RUN | — |
-| PACT-50.05 | Structured network report; optional trace remains ignored | NOT RUN | — |
+| PACT-50.01 | Distinct players and visible Health/Energy/Cooldown/roles/network data | PASS | C++ HUD + blue/orange lights/labels; clean two-client viewport screenshot at `3611c5f` |
+| PACT-50.02 | Visible Dash states, projectile, shield, death/respawn/score/events | PASS | Colored recent-event list and `PROJECTILE HIT // SERVER CONFIRMED`; screenshot shows impacts, Death, Score, Shield |
+| PACT-50.03 | Real two-client screenshot from current SHA | PASS | 1680×560 PNG, 635,976 bytes, SHA-256 `374FDBF5DE651D8E670990C64627B67E5588051AC84C0290B7CE4ABCD962DA28` |
+| PACT-50.04 | Architecture, replication and GAS diagrams | PASS | `docs/images/architecture.png`, `replication-flow.png`, `gas-flow.png`; visually inspected |
+| PACT-50.05 | Structured network report; optional trace remains ignored | PASS | `docs/examples/network-matrix.json`; per-process JSONL retained in ignored Artifacts; no trace claimed |
 | PACT-60.01 | Core, Attribute/Effect, Ability, RepNotify, validation, lifecycle, config tests | NOT RUN | — |
 | PACT-60.02 | Negative, repeated, timeout and process-cleanup tests | NOT RUN | — |
 | PACT-60.03 | UE Automation, headless and interactive verification | NOT RUN | — |
