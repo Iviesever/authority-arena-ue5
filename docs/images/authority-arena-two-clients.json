@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "sourceSha": "3611c5ff740706bc38680a2cb3c5b43bc94856d4",
+  "runId": "5d257488a3d2416eaab4ff13e5420508",
+  "networkProfile": "Lag60",
+  "serverPlusClients": 3,
+  "combatRespawnObserved": true,
+  "ownedProcessLeakCount": 0,
+  "captureWidth": 1680,
+  "captureHeight": 560,
+  "captureMethod": "UE viewport screenshots with HUD, composed side-by-side"
+}

@@ -1,0 +1,75 @@
+{
+  "schemaVersion": 1,
+  "auditFixImplementationSha": "6c817e6fd1011b3944fd0f7be7de94d806494b01",
+  "deliverySourceSha": "eb03f031131d709b74a91a7f0c17216433e06b92",
+  "goalSha256": "A556E8B1DB446034AB8ABD873293205155EB1DDFEBC3E6CE326AC0380DB5C799",
+  "networkMatrix": {
+    "allReportsClean": true,
+    "finalConsistencyComparisonsPerRun": 4,
+    "runs": {
+      "Baseline": "4a469d05f30b4c3aa35adb00b2e1b846",
+      "Lag60": "c3d2177110f74b9a8da1ec7f1a7efb0d",
+      "Lag120": "cd0de4af8a334870865a9b47a6f6e59b",
+      "Jitter": "ad7b47da5ca044659d0148e99ae82d49",
+      "Loss": "af457860b6274a20af7cfb37a20eec80"
+    }
+  },
+  "failureMatrix": {
+    "allReportsClean": true,
+    "runs": {
+      "ClientDisconnect": "efafd84e296b4049aa95e1dc8781aeef",
+      "ServerShutdown": "80675be590e34dc0b819ae2bc4538b1e",
+      "SecondClientConnectFail": "e2d5447e88194c43983efa28eea8d3fe",
+      "DashRejected": "0e8020d7b3274191ba7e0ecc245d8727",
+      "AuthorityAbuse": "97a9123560c246de8286209806d230c3",
+      "AttackFlood": "83735311f95c44b19965d4bbdce8310f",
+      "DeadAbility": "4903728ec6dd4c55bb794dd13ecbecf7",
+      "DuplicateRespawn": "77cfdce4ab694b92860512baea4be5d8",
+      "Watchdog": "63545926ac814536acf5ee33dd2d63ac"
+    },
+    "realGasAttackFlood": {
+      "requests": 4,
+      "confirmed": 1,
+      "cooldownRejected": 3,
+      "projectiles": 1,
+      "damageEvents": 1
+    },
+    "realGasInvalidTarget": {
+      "clientPredicted": true,
+      "serverReason": "Failure.Target",
+      "projectileSpawned": false
+    },
+    "watchdogSourceBound": true,
+    "ownedProcessLeakCount": 0
+  },
+  "cleanSource": {
+    "result": "PASS",
+    "editorDevelopment": true,
+    "gameDevelopment": true,
+    "gameShipping": true,
+    "ueAutomationSucceeded": 3,
+    "editorCombatRunId": "6b38083cf8814d689259840a0fef1dfa",
+    "packagedCombatRunId": "537df6c50af34aba88a12ecf5f1ce8c7",
+    "packagedFinalConsistencyComparisons": 4,
+    "ownedProcessSurvivors": 0
+  },
+  "packages": {
+    "Shipping": {
+      "uatAttempts": 1,
+      "gameExecutableSha256": "3BCB342B3286DB9481B07713BC54F41D2C9FD6115BF111C8B43DCD57E694714F",
+      "packageFingerprintSha256": "1C383D2B835CA22E3E6E4C25D8078940123C74A26A895C0674447713C0DF0889",
+      "payloadBytes": 442065855,
+      "totalBytes": 679627218,
+      "headlessSmoke": true,
+      "interactiveRunId": "190f4e2f7ba44c02bb89be8f620b4793"
+    },
+    "Development": {
+      "uatAttempts": 1,
+      "gameExecutableSha256": "D3DF311ED9BF6159F641EFCFE96E004D633F730F9EACE782C206D9659CDC8240",
+      "packageFingerprintSha256": "5AC90E49C422D1A35102EC9305A38F2DFE31726FA7E243D1AA5FB9BE97E40B48",
+      "payloadBytes": 652238039,
+      "totalBytes": 1037353813,
+      "packagedTwoClientCombat": true
+    }
+  }
+}

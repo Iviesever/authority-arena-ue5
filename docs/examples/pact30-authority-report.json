@@ -1,0 +1,45 @@
+{
+  "schemaVersion": 1,
+  "sourceSha": "148a1b1b71870c02897103daae9fea1045bb15fe",
+  "workingTreeDirty": false,
+  "result": "PASS",
+  "unitAndAutomation": {
+    "mqbCoreAssertions": 41,
+    "networkAutomationSucceeded": 1,
+    "gasAutomationSucceeded": 1
+  },
+  "scenarios": [
+    {
+      "name": "DashRejected",
+      "runId": "41bda348f4884b1d9ae6fe5c6c467a8d",
+      "proved": ["client prediction", "server Energy=0", "Failure.Resource", "position/resource correction"]
+    },
+    {
+      "name": "AuthorityAbuse",
+      "runId": "f8bb4c66b7a34499b2a173b0af90f4b5",
+      "proved": ["ForbiddenStateWrite", "ForgedDamage", "InvalidTarget", "TargetOutOfRange", "DuplicateSequence", "state unchanged"]
+    },
+    {
+      "name": "AttackFlood",
+      "runId": "6d42c540499a4a76becb3f1726220881",
+      "proved": ["first legal request accepted", "three RateLimited rejections", "state unchanged"]
+    },
+    {
+      "name": "DeadAbility",
+      "runId": "9c32a7b11eb14336b08eeca1cfa3bb58",
+      "proved": ["Health=0", "State.Dead", "ability rejected", "no Projectile"]
+    },
+    {
+      "name": "DuplicateRespawn",
+      "runId": "038df5e3b9424b1a990f8aeba1431c7b",
+      "proved": ["two reliable requests", "RespawnPending rejection", "one Pawn replacement"]
+    }
+  ],
+  "allScenarios": {
+    "distinctProcesses": 3,
+    "allOwnedProcessesExitZero": true,
+    "ownedProcessLeakCount": 0,
+    "structuredReasons": true,
+    "authoritativeStateUnpolluted": true
+  }
+}

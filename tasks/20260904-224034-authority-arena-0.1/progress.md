@@ -126,3 +126,255 @@ Result: exit `1` at missing `CoreMinimal.h`. MQB does not reconstruct `.uproject
 - `git push origin main` exited `0`.
 - Local `HEAD` and `git ls-remote origin refs/heads/main` both returned that SHA.
 - Generated `.mqb/`, `Artifacts/`, `Binaries/`, `Intermediate/`, and `Saved/` remained ignored and were not committed.
+
+## 2026-09-04 23:26 UTC+8 — Feature branch created
+
+- Final PACT-00 `origin/main`: `e35df954166ff558b824ce41386c26a68f684d24` after the evidence-only follow-up commit.
+- Created `feat/authority-arena-0.1` from that exact remote-tracking commit and pushed it.
+- First Draft PR command failed with GitHub GraphQL `No commits between main and feat/authority-arena-0.1`, because a branch at the identical baseline has no reviewable diff.
+- Corrective action: commit this factual feature-branch kickoff/evidence update, push it, then repeat Draft PR creation.
+
+## 2026-09-04 23:28 UTC+8 — Draft PR created
+
+- Feature kickoff commit: `0940d5636c52a98ed436b0841bb7f355230f6b25`.
+- Draft PR: `https://github.com/Iviesever/authority-arena-ue5/pull/1`.
+- `gh pr view 1` verified `state=OPEN`, `isDraft=true`, base `main`, head `feat/authority-arena-0.1`, and `mergeStateStatus=CLEAN`.
+- PACT-00 is complete. Complex GAS work remains prohibited until this checkpoint; PACT-10 network foundations are next.
+
+## 2026-09-04 23:30 UTC+8 — PACT-10 replication RED/GREEN
+
+- RED: Editor build exited `6` because `ReplicationTests.cpp` referenced the missing diagnostics/GameState/PlayerState/PlayerController types.
+- Implemented replicated GameState match/run properties, replicated PlayerState identity/score/deaths, reliable Server respawn RPC, unreliable sequence-checked view sample RPC, reliable Client rejection RPC, and role diagnostics.
+- First compile exposed two UE 5.8 API mismatches: the test used nonexistent `GetReplicateMovement`, and PlayerState used deprecated direct `NetUpdateFrequency` access.
+- After changing to `IsReplicatingMovement()` and `SetNetUpdateFrequency()`, the identical Editor target succeeded without that warning.
+- UE Automation initially failed before discovery because a relative `.uproject` path was resolved from Engine binaries. The absolute-path rerun found exactly one `AuthorityArena.Network.ReplicationContract` test and reported Success.
+- Automation logs then exposed nonexistent `/Engine/BasicShapes/Capsule`; Engine content inspection showed Cylinder as the valid asset. After the minimal asset correction, `Run-Automation.ps1` reported `PASS ... succeeded=1` with no AuthorityArena CDO error.
+
+## 2026-09-04 23:40 UTC+8 — PACT-10 real process RED/GREEN
+
+- Runner RED: `RunMultiplayerScenario.ps1` did not exist.
+- Driver RED: Editor build exited `6` because `UAuthorityArenaAutomationDriver` did not exist.
+- After implementing the C++ driver, the reflection test and Editor build passed.
+- First server run listened on UDP port 60455 and emitted `ServerReady`, but the runner expected the wrong text `GameNetDriver Listening`; the actual UE 5.8 marker was `IpNetDriver listening on port`, so no clients were started and the server exited 0 by its timer.
+- With the corrected marker, run `427a705ac63b44c7b63ce3c394377202` used port 56264 and three distinct PIDs (server 28696, clients 37132/26360), all exit 0.
+- Both clients observed AutonomousProxy and SimulatedProxy. The server observed Authority and two connected IDs. Authoritative X positions were Client1 `61.17` from `-600` spawn and Client2 `145.17` from `600` spawn.
+- No UnrealEditor, UBT, ShaderCompileWorker, CrashReportClient, or LiveCodingConsole process remained.
+- This first pass was generated from an uncommitted worktree and is development evidence only. A clean feature-commit rerun is required before PACT-10 rows become PASS/source-bound.
+
+## 2026-09-05 00:00 UTC+8 — PACT-10 lifecycle RED/GREEN
+
+- Lifecycle RED: reflection test failed to compile because the respawn pending API and match multicast were absent.
+- Implemented an unreliable, presentation-only `MulticastMatchPulse`; PlayerController-owned respawn pending gate; reliable respawn request; weak, cancellable GameMode timers; and Logout cleanup.
+- Real Lifecycle run `528914e684d245b6926c117a1872b5b5` on UDP port 55110 passed with three exit-0 PIDs.
+- Server evidence: `PawnDestroyed player=Client2` once, `PawnRespawned player=Client2` once, an intermediate snapshot count 1, then a post-respawn authority snapshot count 2.
+- Client2 emitted `RespawnRequested`; all three processes observed `MatchPulse`; both clients disconnected; no related process remained.
+- This run was dirty development evidence. A clean-commit Automation + ConnectionMovement + Lifecycle matrix remains required.
+
+## 2026-09-05 00:05 UTC+8 — PACT-10 final clean matrix
+
+- Source commit: `15e800be0f02f557e89f98d764a8ba55aa08e6ee`.
+- UE Automation: `AuthorityArena.Network`, exactly 1 test, succeeded 1, failed/not-run/in-process 0.
+- ConnectionMovement: run `b26c8b94d56a4e2e9c70ade8cfc4b523`, port 49720, dirty=false, three distinct exit-0 processes, 2 players, Authority/AutonomousProxy/SimulatedProxy, authoritative movement and two disconnect events.
+- Lifecycle: run `5ddac07d6b1c4869beee9a5a1a108d6f`, port 60979, dirty=false, presentation multicast on all processes, one Client2 Pawn destroy, one reliable respawn request, one respawn, post-respawn authority count 2, two disconnect events.
+- Both client logs had zero standalone fallback. Final related-process inventory was empty.
+- Sanitized evidence: `docs/examples/pact10-connection-report.json` and `docs/examples/pact10-lifecycle-report.json`.
+- PACT-10 complete; PACT-20 native GAS is next.
+
+## 2026-09-05 00:18 UTC+8 — PACT-20 GAS contract RED/GREEN
+
+- RED: `AbilityTests.cpp` failed because ASC/AttributeSet/effects/ability/component/projectile types did not exist.
+- Added PlayerState-owned Mixed ASC/AttributeSet, three native ability specs, native gameplay tags, C++ GameplayEffects, predicted Root Motion Dash, authority Projectile, duration Shield, CombatComponent and HealthComponent.
+- UHT first failed because forward declarations were placed between `UCLASS()` and PlayerState; moving them above the macro fixed the root cause.
+- C++ then failed on a mixed `FVector_NetQuantize` ternary; normalizing to FVector and explicitly constructing the RPC value fixed it.
+- First GAS Automation crashed during GameplayEffect CDO construction because dynamic `FindOrAddComponent` called empty-name `NewObject`. Named `CreateDefaultSubobject` target-tag components fixed the crash.
+- `AuthorityArena.GAS.Contract` then passed. A separate damage RED added the missing `ComputeMitigatedDamage`; GREEN proves 34/17 Shield behavior and fail-closed negative/NaN inputs.
+
+## 2026-09-05 00:35 UTC+8 — PACT-20 Combat exploratory run
+
+- Early Combat runs proved ability activation but exposed unsynchronized local schedules, Dash plus auto-move overshoot, world/local projectile velocity double-rotation, and uncapped null-RHI saved-move warnings.
+- Added replicated `ScenarioStartServerTime`, stopped auto-walk in Combat, set projectile initial velocity to world space, used deferred server spawn, and capped test processes at 60 FPS.
+- Run `52d7edcffa6a41ac9429f0a8ff6a31b4` passed: Dash/Shield predicted and confirmed, four server Projectile spawns/impacts, first damage 34→17 with Shield, later Health 0, Client2 Deaths=1, Client1 Score=1, and server respawn. Saved-move warning count was 0.
+
+## 2026-09-05 00:45 UTC+8 — PACT-20 authority resource rejection exploratory run
+
+- RED contract required a default-off, server-only one-shot Dash rejection gate.
+- `DashRejected` uses actual authority state: the client predicts from Energy 100; server CanActivate changes Energy to 0 before cost validation, rejects with `Failure.Resource`, and GAS corrects predicted movement/resource.
+- Run `00180bf2b10a4cc58c878a20b11f3a8c` passed with final server/client Client1 `x=-600`, Energy `0`, three exit-0 owned PIDs.
+- A concurrently observed short-lived UnrealEditor-Cmd process was read-only identified as another project (`D:\program\cookscope-ue5`) and was not touched.
+- Both PACT-20 real runs were dirty development evidence. Commit and clean-source-bound reruns remain required.
+
+## 2026-09-05 00:51 UTC+8 — PACT-20 final clean matrix
+
+- Implementation commit: `b23b926`; clean-build-only Unity collision then exposed duplicate anonymous test helper names. Renaming the GAS helper produced fix commit `76768924242df93c1635bcbb061d83de9368bb70`.
+- `AuthorityArenaEditor Win64 Development`: succeeded/up to date from clean worktree.
+- `AuthorityArena.GAS`: succeeded 1, failed/not-run/in-process 0.
+- `AuthorityArena.Network`: succeeded 1, failed/not-run/in-process 0.
+- Combat: run `30747fa958414195af10d4778f35c6f0`, port 58054, source `7676892`, dirty=false. Dash/Shield prediction+confirmation, four server projectiles, 34→17 shield mitigation, Health 0, Client2 Deaths 1, Client1 Score 1, respawn, both disconnect, all three owned PIDs exit 0, saved-move warnings 0.
+- DashRejected: run `a9af7e12e07a4aa0b18e61cb44b18fe2`, port 61060, source `7676892`, dirty=false. Client predicted; server Energy 0 and `Failure.Resource`; final server/client x=-600 and Energy=0; all owned PIDs exit 0.
+- Sanitized evidence: `docs/examples/pact20-combat-report.json`, `docs/examples/pact20-dash-rejection-report.json`.
+- PACT-20 complete. PACT-30 fail-closed abuse paths are next.
+
+## 2026-09-05 00:55 UTC+8 — PACT-30 Core/RPC RED/GREEN
+
+- MQB RED: new `AuthorityProbeRequest` tests failed because the request type, decisions and validator did not exist.
+- MQB GREEN: 41 assertions pass, covering forbidden Health/Score writes, forged damage, duplicate sequence, invalid/dead/out-of-range targets and rate limiting.
+- UE reflection RED: Network Automation failed exactly one assertion because `ServerSubmitAuthorityProbe` was absent.
+- Implemented a reliable owning-PlayerController RPC that reconstructs server truth, delegates to Core, emits structured reasons, sends a Client rejection notification, and never mutates gameplay state.
+- First build rejected local names shadowing Controller members under V7 warnings-as-errors; renaming them to `ArenaCharacter`/`ArenaPlayerState` restored a clean build.
+- Network Automation returned to 1/1 success.
+
+## 2026-09-05 01:07 UTC+8 — PACT-30 exploratory negative matrix
+
+- `AuthorityAbuse` run `37a26bbf1ec14bed951109d28aeff7f0`: `ForbiddenStateWrite`, `ForgedDamage`, `InvalidTarget`, `TargetOutOfRange`; Health/Energy 100 and Score/Deaths 0 remained unchanged.
+- `AttackFlood` run `7e11d9eb1be34295be77a9750c6f7ea8`: exactly one legal probe accepted and three `RateLimited`; state unchanged.
+- Added duplicate sequence to AuthorityAbuse; Core already proves the rule.
+- `DeadAbility` run `0bc19c7207954ed6b5667cd6fd33bec5`: actual server Health 0 + `State.Dead`, normal GAS attack rejected, no Projectile.
+- `DuplicateRespawn` first exposed an irrelevant movement assertion after stable respawn at x=600. Logs already proved two requests, `RespawnPending`, and one replacement. Removing movement from this lifecycle-only scenario produced passing run `ca0152d66899444e98520b0d8a2b7fcc`.
+- All were dirty development evidence; clean-commit full negative matrix remains mandatory.
+
+## 2026-09-05 01:12 UTC+8 — PACT-30 final clean matrix
+
+- Source: `148a1b1b71870c02897103daae9fea1045bb15fe`, working tree clean before the matrix.
+- MQB Core: 41 assertions pass.
+- Network and GAS Automation: each succeeded 1, failed/not-run/in-process 0.
+- DashRejected `41bda348f4884b1d9ae6fe5c6c467a8d`: actual zero-Energy server rejection and client correction.
+- AuthorityAbuse `f8bb4c66b7a34499b2a173b0af90f4b5`: state write, damage, invalid/out-of-range target and duplicate sequence rejected; state unchanged.
+- AttackFlood `6d42c540499a4a76becb3f1726220881`: one accepted, three RateLimited; state unchanged.
+- DeadAbility `9c32a7b11eb14336b08eeca1cfa3bb58`: Health 0 + State.Dead, ability rejected, no Projectile.
+- DuplicateRespawn `038df5e3b9424b1a990f8aeba1431c7b`: two requests, pending rejection, exactly one replacement.
+- Every scenario used three owned processes, all exit 0, owned PID leak count 0.
+- Sanitized combined evidence: `docs/examples/pact30-authority-report.json`.
+- PACT-30 complete; PACT-40 network/failure orchestration is next.
+
+## 2026-09-05 01:22 UTC+8 — PACT-40 network profiles exploratory runs
+
+- Added `NetworkProfile` with UE-source-confirmed `PktLag/PktLagVariance/PktLoss` command-line settings and log assertions.
+- Lag60 first failed because a 0.6 s attack spacing locally hit the replicated 0.45 s cooldown; widened attacks to 3/4/5 s. Lag60 then passed full Combat.
+- Lag120 first completed Combat but missed Client2 disconnect because the exit timer lived on the respawned Character and reset. Moved client process exit ownership to PlayerController; Lag120 then passed.
+- Jitter 90±30 ms passed full Combat.
+- Loss 80±15 ms + 2% completed all Combat assertions; the runner's unrelated 100 uu movement threshold failed on a partially corrected Dash. Removing that threshold only from Combat preserved Dash prediction/confirmation and produced a full Loss pass.
+
+## 2026-09-05 01:28 UTC+8 — PACT-40 process fault exploratory runs
+
+- ClientDisconnect, ServerShutdown and SecondClientConnectFail passed.
+- ServerShutdown and connection failure use a C++ GameInstance network-failure delegate and exit without standalone fallback.
+- Watchdog runner exited non-zero on its deadline; all three logs were preserved and the exact RunId had no remaining process.
+- `Test-Watchdog.ps1` and runner contract tests passed, including invalid-profile fail-closed behavior.
+
+## 2026-09-05 01:33 UTC+8 — Per-process JSONL RED/GREEN
+
+- RED: ConnectionMovement completed but `server.jsonl` did not exist.
+- Added locked JSONL append at the central diagnostics boundary and per-process role/path arguments.
+- GREEN run `473e6a64f1f3425eb18a381c369ebbab`: server/client1/client2 streams contained 35/13/12 validated events with exact RunId/role and monotonic sequence.
+- `Verify-ScenarioReport.ps1 -RequireClean` correctly rejected this dirty development report; non-clean verification passed.
+- PACT-40 implementation is ready to commit. A full clean network/failure/repeat matrix remains mandatory before PASS rows.
+
+## 2026-09-05 01:46 UTC+8 — PACT-40 final clean matrix
+
+- Source: `aef2a5e98094f53d99057c0d257bccb92ab13411`, dirty=false for all ordinary reports.
+- NetworkMatrix: Baseline, Lag60, Lag120, Jitter 90±30, and Loss 80±15 + 2% all passed identical full Combat and three-JSONL validation; every report passed strict SHA/clean verification.
+- FailureMatrix: ClientDisconnect, ServerShutdown, SecondClientConnectFail, DashRejected, AuthorityAbuse, AttackFlood, DeadAbility, DuplicateRespawn all passed strict report verification.
+- Watchdog child runner exited 1 on timeout; three logs preserved; exact RunId process leak count 0.
+- Three consecutive ConnectionMovement baselines passed with independent RunIds and ports 62232, 53192, 63922; each strict report verification passed.
+- Network timing/duration remains observation-only (`deterministicTimingClaim=false`).
+- Sanitized evidence: `docs/examples/network-matrix.json`, `docs/examples/failure-matrix.json`.
+- PACT-40 complete; PACT-50 visible diagnostics and screenshots are next.
+
+## 2026-09-05 02:20 UTC+8 — PACT-50 HUD and visual evidence
+
+- HUD RED: missing HUD/movement types. Implemented default C++ HUD, percent tests, cooldown queries, real CharacterMovement correction override, ping/config lag/loss, attributes/tags/score/deaths and recent events. UI Automation passed.
+- First desktop screenshot was rejected during visual QA because DPI placement clipped Client2 and an unrelated UAC dialog overlaid the image.
+- Replaced desktop capture with two UE viewport screenshots composed side-by-side; this removed external UI but revealed a black unlit Entry world.
+- Added C++ Directional/Sky/Point lights after UI tests first failed their absence; the graybox became visible.
+- Added C++ TextRender identifiers and blue/orange PointLights after tests first failed their absence; corrected mirrored label yaw after visual inspection.
+- Projectile impact multicast initially raced same-frame Actor destruction. Keeping the stopped/collision-disabled Projectile alive 0.25 s delivered the multicast; the HUD now retains orange impact events and both clients show a yellow server-confirmed hit message.
+- Final clean capture source: `3611c5ff740706bc38680a2cb3c5b43bc94856d4`, run `5d257488a3d2416eaab4ff13e5420508`, Lag60, 1680×560, 635,976 bytes, PNG SHA-256 `374FDBF5DE651D8E670990C64627B67E5588051AC84C0290B7CE4ABCD962DA28`, owned leak 0.
+- Architecture/replication/GAS diagrams were generated from actual class/RPC names and visually inspected for clipping and flow accuracy.
+- PACT-50 complete; PACT-60 full build/package/clean-source delivery begins next.
+
+## 2026-09-05 02:38 UTC+8 — PACT-60 build and Automation gate
+
+- MQB Core passed 41 assertions.
+- `AuthorityArenaEditor Win64 Development` and `AuthorityArena Win64 Shipping` both succeeded after reverting an invalid attempt to enable general Shipping logging against precompiled shared Engine libraries.
+- `Run-Automation.ps1` passed all three `AuthorityArena.*` tests; Editor three-process Combat run `ddf8e7a16acd4de69bceca3f6f172ff3` passed.
+- Shipping runtime evidence was moved to structured JSONL (`ServerReady`, `ArenaReady`) instead of depending on logs disabled by Shipping.
+
+## 2026-09-05 02:47 UTC+8 — Shipping package RED/GREEN and payload identity
+
+- RunUAT BuildCookRun completed Build, full Cook (493 cooked / 500 total), Stage, Pak, IoStore and Archive for clean source `3ecfd91cb043802c1ddce4380eb3cbee2029c0cf`.
+- The first manifest hashed only the stable bootstrap EXE; stronger tests required the real game EXE and all runtime `.exe/.dll/.pak/.utoc/.ucas` files.
+- Enhanced verification exposed two real manifest bugs: ordered-dictionary byte aggregation produced zero, then unsorted dictionary serialization produced a non-reproducible fingerprint. Both failed before acceptance and were fixed with explicit numeric aggregation and sorted `PSCustomObject` entries.
+- Passing Shipping manifest: `Artifacts/package/3ecfd91c-20260905-024553/package-manifest.json`; game EXE SHA-256 `1F4E81EAE5E73BEE3239D90D36727C779C9BF24B69EA605BC4B7BFC3C9E16FC9`; package fingerprint `6560893316FAFD46B662C6C21BD4868DB24232BDD0FEB589F0F4D06975699C8C`; payload bytes `442058175`.
+- Shipping headless packaged smoke passed with exact runId/role JSONL. One later UAT retry lost its process-owned Zen instance between Cook and Stage; failure remained in its unique directory and the fresh-directory rerun succeeded through `-StartZenServerForStage`.
+
+## 2026-09-05 02:57 UTC+8 — Packaged two-client topology RED/GREEN
+
+- Shipping `Map?listen` and client URL probes produced `NM_Standalone`. Local UE 5.8 source at `Engine/Private/GameInstance.cpp` confirmed `UE_ALLOW_MAP_OVERRIDE_IN_SHIPPING=0`; the runner now rejects Shipping packaged E2E explicitly instead of accepting false standalone runs.
+- The first Development archive completed UAT but exposed an incorrect assumption that its internal EXE name carried a configuration suffix. Discovery was fixed to select the project EXE under `AuthorityArena/Binaries/Win64` and verified on the real archive tree.
+- First Development packaged Combat reached a real ListenServer plus two clients, but the host Pawn overlapped Client1 at spawn and displaced its predicted Dash laterally, so authority projectiles missed Client2. The failing JSONL proved no damage/death/score.
+- Minimal fix: the packaged runner passes `-AuthoritySuppressHostPawn`; GameMode removes only the automation ListenServer host Pawn. JSON assertion text also normalizes packaged numeric object suffixes without changing original JSONL.
+- Clean Development package source `f7fc7c1fb3e4964842aeca62a4d0559f90924b85`: manifest `Artifacts/package/f7fc7c1f-20260905-025507/package-manifest.json`; game EXE SHA-256 `90FC08E1F29C31D09243A9CED12D791820CE99D95B38BF16AA35695255D8E5C2`; fingerprint `0E1A7F190C6128F8A4F20B756B763CEDF815F84595078E263522F5399023D603`; payload bytes `652230359`.
+- Packaged Combat run `627d937a49fb48b9bd934903220c6572` passed with three distinct processes, two remote combat Pawns, Dash/Shield prediction and confirmation, first-hit 34→17 mitigation, four server projectiles, Death, Respawn and Score.
+- Development packaged interactive D3D11 run `1f8fa321fdf04478a65f6f46739b4ab8` opened a real window, initialized RHI/audio/Slate/IoStore, emitted `ServerReady` + `ArenaReady`, and exited 0 by its owned timer.
+
+## 2026-09-05 03:05 UTC+8 — PACT-70 documentation RED/GREEN
+
+- RED: `Verify-Documentation.ps1` failed on missing `README_ZH.md`.
+- Authored English/Chinese READMEs, Testing, Known Limitations, AI Assistance, Code Walkthrough, Interview Guide, three independent Live Change Drills, Rollback comparison, Release Notes, and source-contract CI.
+- GREEN: documentation verifier passed 17 required files, eight README first-page answers, five exact AI disclosure statements, all interview topics, three drills, rollback dimensions, and the no-custom-assets policy.
+- Added `Verify-CleanSource.ps1`; structure verifier first failed on its absence, then passed after the bounded unique-clone implementation. Clean-source execution remains the next gate.
+
+## 2026-09-05 03:26 UTC+8 — PACT-60 final clean-source delivery
+
+- First full clone of `be8b189` passed all build/runtime/package gates but revealed the checked-out goal byte hash changed from `A556…C799` to `B61…` under CRLF conversion.
+- The first `.gitattributes` attempt fixed general files to LF but converted the mixed-line-ending goal blob to `3D9…`; a hard expected-hash gate prevented acceptance. `-text !eol` plus forced index renormalization restored the verbatim 19,612-byte contract blob. A lightweight clone then reproduced `A556E8B1DB446034AB8ABD873293205155EB1DDFEBC3E6CE326AC0380DB5C799`.
+- Final clean source: detached `568b57e5f99dc28d4f70f64a5fee3829cd08e4db` under `Artifacts/clean-checkout/568b57e5-20260905-031936`; no copied Binaries/Intermediate/Saved/Artifacts and Git remained clean.
+- Fresh MQB: four compile misses + one link miss, then 41 assertions pass. Fresh UBT: Editor Development, Game Development and Game Shipping all succeeded. UE Automation passed 3/3.
+- Editor Combat run `bbaa430861344e6ca7d0e0a9548ba959` passed with three exit-0 processes.
+- Clean Shipping package: all stages true; 679,588,078 total bytes; game EXE SHA-256 `43D463E0494DFD66A600532BFE40DF3D2805472D09B6BE08CB7C039D341B7C33`; payload fingerprint `0EC9AB311007BB018E99115DF3DFA1438115B85773D3982E5DF845F431604BEF`; headless packaged run `f5254a4164fd4b9192ace5882e2c0620` passed.
+- Clean Development package: all stages true; 1,037,313,879 total bytes; game EXE SHA-256 `D2C4CCF947CACD342D190809E14EEB65893CB853CBC2669FEE399EA0EBDAE790`; payload fingerprint `968E8C11FEE1DE183B8D133F00EBB8A688AE0F13F90D62514E4D9FBF093184E0`; packaged Combat run `5472e7fbbbf64bef9e454675b419f982` passed.
+- `clean-source-report.json` records dirty=false and owned process survivors 0. PACT-60 complete; final current-SHA matrix and independent audit remain before release.
+
+## 2026-09-05 03:40 UTC+8 — Current-SHA full matrix and packaged PID fix
+
+- Current source `d3fbb828f62d706c6ecee50cdadc70a61c31ff81`: contracts, project structure, documentation, MQB 41, Editor Development, Game Development, Game Shipping, Automation 3/3, headless and D3D11 interactive smoke all passed.
+- Five current-source Combat profiles passed: Baseline `bf3cf999`, Lag60 `00b1f97d`, Lag120 `d9b477a1`, Jitter `633bdfdf`, Loss `6da7e82a`.
+- Nine current-source failure scenarios passed: ClientDisconnect, ServerShutdown, SecondClientConnectFail, DashRejected, AuthorityAbuse, AttackFlood, DeadAbility, DuplicateRespawn and watchdog. Three further ConnectionMovement repeats used run IDs `0c7dc110`, `c03d74da`, `1c0d068e`; invalid-profile/watchdog runner contracts passed.
+- GitHub source-contract CI reported SUCCESS for push and PR. All 16 normal/expected-fault reports in the final batch had exact source SHA, dirty=false and no mismatches.
+- Process audit found one old `0cf20c0` Shipping child (PID 31620, parent was the first failed bootstrap PID 36448). Its command line proved it belonged to this repository's obsolete `-ExecCmds=quit` smoke. It was stopped only after exact absolute package path verification.
+- RED regression contract required packaged smoke to start `$manifest.gameExecutable`. Both packaged runners now launch the configuration-specific game EXE directly, so the same PID/start/path identity is tested and cleaned.
+- Direct Shipping headless smoke run `20d42cae` and direct Development packaged Combat run `3d370852` passed against the clean `568b57e` packages. A post-run scan found zero AuthorityArena UE processes.
+
+## 2026-09-05 04:23 UTC+8 — Independent audit findings and exploratory fixes
+
+- Fresh read-only audit result: Blocker 0, High 3, Medium 3, Low 0. Release remained Draft/not eligible.
+- High 1: real Combat reports lacked final authority-versus-client convergence. RED first attempt captured at simultaneous exit and Client2 lost its peer. GREEN now captures two seconds before exit; run `88ea0e139a4d436ca9b95b5eb5723c6b` contains four comparisons (two players × two clients), position delta <=0.05 uu and zero Health/Energy/Score/Deaths/Shield/Dead differences.
+- High 2: AttackFlood/invalid target were Core probe-only. `UGA_ProjectileAttack::CanActivateAbility` now performs actual authority living-target/range/cone validation (1000 uu, dot >=0.8). AuthorityAbuse run `b78472f1d96f4440a90f8c68b5d01866` shows client Attack prediction, server `Failure.Target`, and no projectile from the natural 1200 uu spawn distance.
+- The first server-side flood attempt batched four local activations: API booleans were all true but GAS executed only one. A second internal-server attempt was correctly blocked by LocalPredicted networking policy. Final design uses GAS `CallServerTryActivateAbility` from the owning client with four distinct Prediction Keys at 50 ms spacing. Run `8018a1f184fe4e68971f91a029ac4f2c` proves one `AttackConfirmed`, one projectile/34 damage, three server `Cooldown.Attack` rejections and only the expected 5 Energy cost.
+- High 3: final HEAD lacked exact-SHA clean/package evidence. Matrix rows remain RED until the audit fixes are committed and `Verify-CleanSource.ps1` produces new Shipping/Development packages from that commit.
+- Medium fixes: PACT-50 screenshot wording now binds exact capture SHA instead of current HEAD; watchdog report adds source SHA, dirty flag, UTC and three role/PID identities; handoff/matrix are synchronized. PR body will be updated after clean evidence.
+- Cold-start timing exposed fixed server lifetime racing late client startup. Normal scenarios now use a 40 s safety cap and authority exits 100 ms after both remote clients disconnect; ServerShutdown and Watchdog preserve their explicit behavior. Automation 3/3 and baseline Combat/AuthorityAbuse/AttackFlood are exploratory green; clean full rerun remains mandatory.
+
+## 2026-09-05 04:48 UTC+8 — Audit-fix full matrix and clean-package retry boundary
+
+- Clean commit `6c817e6fd1011b3944fd0f7be7de94d806494b01`: MQB 41, Editor/Game Development, Game Shipping and Automation 3/3 passed.
+- Five Combat profiles all passed with four final cross-process comparisons: Baseline `4a469d05`, Lag60 `c3d21771`, Lag120 `cd0de4af`, Jitter `ad7b47da`, Loss `af457860`.
+- Failure matrix 9/9 passed. Real target run `97a91235` and real GAS Flood run `83735311` passed. Three repeated baselines `d48cac0b`, `f584ca93`, `76ee9233` passed. Enhanced watchdog `63545926` and runner-contract watchdog `20e5625f` recorded exact source/dirty/UTC/role-PIDs and leak 0.
+- Exact-SHA clean clone rebuilt MQB and all three UBT targets, passed Automation and Editor Combat `094550ec`, then built/verified/ran the Shipping package. Shipping game EXE SHA-256 `C793E948494FBABAFF3DE9EE9184C27BFE4EB92153AC44F9728EE3F11444D551`; package fingerprint `B2F1130B5CF0062AEE0A9FFB8E4A06717D192417F42BA60BCBD95B1F4F503A7E`.
+- The immediately following Development UAT hit `ConflictingInstance` before Build because the global UBT mutex had not finished teardown. `Package-Win64.ps1` now retries exactly once after 3 seconds only when the captured UAT log explicitly contains `ConflictingInstance`; all other failures remain fail-fast. A new exact-SHA clean run is required.
+
+## 2026-09-05 04:56 UTC+8 — Final exact-source clean delivery after audit fixes
+
+- Final delivery source `eb03f031131d709b74a91a7f0c17216433e06b92` cloned detached to `Artifacts/clean-checkout/eb03f031-20260905-044828`; goal hash exact, Git clean, no generated state copied.
+- Fresh MQB 41, Editor Development, Game Development, Game Shipping, Automation 3/3 and Editor Combat `6b38083cf8814d689259840a0fef1dfa` all passed. Editor Combat contains final consistency 4/4.
+- Shipping UAT succeeded first attempt through Build/Cook/Stage/Pak/IoStore/Archive. 679,627,218 total bytes; game EXE SHA-256 `3BCB342B3286DB9481B07713BC54F41D2C9FD6115BF111C8B43DCD57E694714F`; package fingerprint `1C383D2B835CA22E3E6E4C25D8078940123C74A26A895C0674447713C0DF0889`. Headless and interactive run `190f4e2f7ba44c02bb89be8f620b4793` passed by direct game-EXE ownership.
+- Development UAT also succeeded first attempt. 1,037,353,813 total bytes; game EXE SHA-256 `D3DF311ED9BF6159F641EFCFE96E004D633F730F9EACE782C206D9659CDC8240`; package fingerprint `5AC90E49C422D1A35102EC9305A38F2DFE31726FA7E243D1AA5FB9BE97E40B48`.
+- Packaged Combat `537df6c50af34aba88a12ecf5f1ce8c7`: report source SHA and package source SHA both exact `eb03f031`; three exit-0 processes, full Combat, final consistency 4/4. Clean-source report records owned survivors 0.
+- All first-audit findings now have clean evidence. A second independent audit and final CI remain before release.
+
+## 2026-09-05 05:05 UTC+8 — Second independent audit
+
+- Final evidence commit `d11a46c174d716cec44c45267ec54cd7065b15ca` pushed; push and PR source-contract CI both SUCCESS; worktree/remote HEAD matched and no AuthorityArena process remained.
+- Second fresh read-only audit: Blocker 0, High 0, Medium 1, Low 0. It independently re-read raw Editor and packaged finalConsistency 4/4; real GAS target and Flood JSONL; all Shipping 20 / Development 28 payload hashes; package fingerprints/game EXE hashes; exact source/package SHA; watchdog identities; CI/PR/tag/Release/tracked-binary state.
+- The one Medium was a stale phrase in `KNOWN_LIMITATIONS.md` calling the screenshot “current-source” despite its explicit capture SHA. It is corrected to capture-source `3611c5ff740706bc38680a2cb3c5b43bc94856d4`, matching metadata and acceptance matrix.
+- PACT-70.05 now satisfies the required no-Blocker/High gate. PR Ready/merge/tag/source-only Release remain and are not pre-marked complete.

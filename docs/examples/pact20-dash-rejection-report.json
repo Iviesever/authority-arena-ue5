@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "runId": "a9af7e12e07a4aa0b18e61cb44b18fe2",
+  "scenario": "DashRejected",
+  "sourceSha": "76768924242df93c1635bcbb061d83de9368bb70",
+  "workingTreeDirty": false,
+  "result": "PASS",
+  "processes": {
+    "distinct": 3,
+    "allExitZero": true,
+    "ownedProcessLeakCount": 0
+  },
+  "assertions": {
+    "clientPredictedDash": true,
+    "serverSetAuthoritativeEnergyToZero": true,
+    "serverRejectedWithFailureResource": true,
+    "serverFinalClient1X": -600.0,
+    "clientFinalClient1X": -600.0,
+    "serverFinalClient1Energy": 0.0,
+    "clientFinalClient1Energy": 0.0,
+    "predictionCorrected": true,
+    "bothDisconnectedCleanly": true
+  }
+}

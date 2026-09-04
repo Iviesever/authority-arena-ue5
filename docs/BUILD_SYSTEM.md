@@ -4,7 +4,7 @@
 
 | Tool | Verified version/path | Status |
 |---|---|---|
-| Unreal Engine | 5.8.0, CL 55116800, `D:\program\UnrealEngine\Epic Games\UE_5.8` | discovered; project build not yet run |
+| Unreal Engine | 5.8.0, CL 55116800, `D:\program\UnrealEngine\Epic Games\UE_5.8` | Editor/Game build, Automation, Cook and package verified |
 | Visual Studio | Community 2026 18.7.3 | installed |
 | MSVC | 14.51.36231 (`cl.exe` 19.51.36248) | installed |
 | Windows SDK | 10.0.26100.0 | installed |
@@ -30,7 +30,7 @@ mqb run Tests/AuthorityArenaCoreTests.cpp `
 
 MQB 5.4 owns a default `/W3`. Adding raw `/W4` creates MSVC command-line warning D9025 because it overrides the owned default. The evidence path retains MQB's `/W3` and adds `/WX`, producing a clean build where every emitted compiler warning fails the command.
 
-On 2026-09-04 the first test compile failed because the production headers did not exist. After the minimal implementation, 32 assertions passed. A consecutive identical run reported four compile-cache hits, one link-cache hit, and zero misses.
+On 2026-09-04 the first test compile failed because the production headers did not exist. After the minimal implementation, 32 assertions passed. PACT-30 expanded the same suite to 41 assertions for hostile authority probes. Consecutive identical runs report compile/link cache hits; timings remain observational.
 
 ## UE build boundary
 
@@ -79,4 +79,14 @@ This Epic-installed distribution therefore uses a separate Game/Editor process w
 
 ## Runtime smoke boundary
 
-Headless Editor-Cmd and visible Editor game processes both loaded `/Engine/Maps/Entry`, selected `AuthorityArenaGameMode`, emitted `AA_EVENT ArenaReady blocks=6`, and were cleaned up by verified owned PID. The installed NVIDIA 551.61 driver is deny-listed by UE 5.8 for D3D12 and blocked visible startup before engine initialization. The visible smoke therefore uses explicit `-d3d11`; the project default remains D3D12 until packaging validation decides whether that default is viable.
+Headless Editor-Cmd and visible Editor game processes both loaded `/Engine/Maps/Entry`, selected `AuthorityArenaGameMode`, emitted `AA_EVENT ArenaReady blocks=6`, and were cleaned up by verified owned PID. The installed NVIDIA 551.61 driver is deny-listed by UE 5.8 for D3D12 and blocked visible startup before engine initialization. Visible Editor and packaged smoke therefore use explicit `-d3d11`; no D3D12 compatibility claim is made for that host.
+
+## Win64 package boundary
+
+`Package-Win64.ps1` refuses a dirty worktree, runs MQB Core first, and invokes RunUAT with Build/Cook/Stage/Pak/IoStore/Archive. `Verify-PackagedBuild.ps1` rechecks stage booleans, the bootstrap and configuration-specific game EXE, every `.exe/.dll/.pak/.utoc/.ucas` byte count and SHA-256, payload byte total, and an aggregate sorted package fingerprint.
+
+Runtime scripts launch the manifest's configuration-specific `gameExecutable` directly. Holding the root bootstrap PID is insufficient because the bootstrap can create a child game process and exit; direct launch makes the process whose readiness/exit is asserted the same PID/start-time/path identity that cleanup owns.
+
+Both Shipping and Development archives are local-only. Shipping proves the release configuration and real headless/interactive startup. UE 5.8 `GameInstance.cpp` defines `UE_ALLOW_MAP_OVERRIDE_IN_SHIPPING=0`, so a Shipping Game build clears command-line map/connection URLs. Packaged server-plus-two-client automation deliberately uses Development and reports that configuration in JSON; it does not weaken the engine-wide Shipping policy.
+
+RunUAT can start Zen with the Cook process as owner and later sponsor it for Stage. One retained run lost Zen between Cook and Stage and failed; a new-directory rerun exercised `-StartZenServerForStage` and succeeded. Failed archive directories remain ignored evidence and are never overwritten.

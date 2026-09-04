@@ -29,8 +29,9 @@ if ($missingFiles.Count -gt 0) {
 
 $goalPath = Join-Path $taskRoot 'goal-objective.md'
 $goalHash = (Get-FileHash -LiteralPath $goalPath -Algorithm SHA256).Hash
-if ([string]::IsNullOrWhiteSpace($goalHash)) {
-    throw 'The copied goal has no SHA-256.'
+$expectedGoalHash = 'A556E8B1DB446034AB8ABD873293205155EB1DDFEBC3E6CE326AC0380DB5C799'
+if ($goalHash -ne $expectedGoalHash) {
+    throw "Goal objective SHA-256 mismatch: expected=$expectedGoalHash actual=$goalHash"
 }
 
 $gitignore = Get-Content -LiteralPath (Join-Path $repositoryRoot '.gitignore') -Raw

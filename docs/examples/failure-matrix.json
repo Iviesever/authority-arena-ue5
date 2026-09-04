@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "sourceSha": "aef2a5e98094f53d99057c0d257bccb92ab13411",
+  "workingTreeDirty": false,
+  "result": "PASS",
+  "scenarios": [
+    {"name":"ClientDisconnect","runId":"72bd290cad1b414b9e0f0be60611ab46","result":"PASS"},
+    {"name":"ServerShutdown","runId":"1aa46dd483b64bf2b6e9b759194a6a89","result":"PASS_EXPECTED_FAULT"},
+    {"name":"SecondClientConnectFail","runId":"ec61192c0d8f4b648a54ae01f84234b4","result":"PASS_EXPECTED_FAULT"},
+    {"name":"DashRejected","runId":"dfca197dd4d84770bf96d53bb59b66f2","result":"PASS"},
+    {"name":"AuthorityAbuse","runId":"3e825d7872cd4922b76de4f7f7c5a837","result":"PASS"},
+    {"name":"AttackFlood","runId":"a0b1cf743ffa4316a9ee2b5247e2a885","result":"PASS"},
+    {"name":"DeadAbility","runId":"66d6a3d266cb4d5c8f50ed6aeb355731","result":"PASS"},
+    {"name":"DuplicateRespawn","runId":"18ea65615a6a4ea19384add49d8e50f8","result":"PASS"},
+    {"name":"Watchdog","runId":"566ffb4dc3c9440488c2f331842d22e1","runnerExitCode":1,"result":"PASS_EXPECTED_FAILURE","logsPreserved":true,"ownedProcessLeakCount":0}
+  ],
+  "repeatBaseline": [
+    {"runId":"31cf0b3ea52941409b530a1e612f0f8e","port":62232,"result":"PASS"},
+    {"runId":"1a070275e99149f29b23737d889cdba8","port":53192,"result":"PASS"},
+    {"runId":"24ef7b1f047742338b0c6acd6c48df33","port":63922,"result":"PASS"}
+  ]
+}

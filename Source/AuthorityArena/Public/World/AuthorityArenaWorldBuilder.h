@@ -5,6 +5,9 @@
 #include "AuthorityArenaWorldBuilder.generated.h"
 
 class USceneComponent;
+class UDirectionalLightComponent;
+class UPointLightComponent;
+class USkyLightComponent;
 class UStaticMeshComponent;
 
 UCLASS(NotBlueprintable)
@@ -42,4 +45,13 @@ private:
 
     UPROPERTY(VisibleAnywhere, Category = "Arena")
     TObjectPtr<UStaticMeshComponent> CenterMarker;
+
+    UPROPERTY(VisibleAnywhere, Category = "Arena")
+    TObjectPtr<UDirectionalLightComponent> DirectionalLight;
+
+    UPROPERTY(VisibleAnywhere, Category = "Arena")
+    TObjectPtr<USkyLightComponent> SkyLight;
+
+    UPROPERTY(VisibleAnywhere, Category = "Arena")
+    TObjectPtr<UPointLightComponent> FillLight;
 };

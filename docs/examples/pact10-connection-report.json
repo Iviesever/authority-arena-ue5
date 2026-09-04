@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "runId": "b26c8b94d56a4e2e9c70ade8cfc4b523",
+  "scenario": "ConnectionMovement",
+  "sourceSha": "15e800be0f02f557e89f98d764a8ba55aa08e6ee",
+  "workingTreeDirty": false,
+  "result": "PASS",
+  "processes": {
+    "distinct": 3,
+    "allExitZero": true,
+    "roles": ["Server", "Client1", "Client2"]
+  },
+  "assertions": {
+    "connectedPlayers": 2,
+    "authorityObserved": true,
+    "autonomousProxyObserved": true,
+    "simulatedProxyObserved": true,
+    "movementOccurred": true,
+    "client1AuthorityX": -69.19,
+    "client2AuthorityX": 14.81,
+    "bothDisconnectedCleanly": true,
+    "standaloneFallbackObserved": false,
+    "ownedProcessLeakCount": 0
+  }
+}

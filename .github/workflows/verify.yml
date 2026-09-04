@@ -1,0 +1,29 @@
+name: Source contracts
+
+on:
+  push:
+    branches: [main, feat/authority-arena-0.1]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  source-contracts:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify governance and project structure
+        shell: pwsh
+        run: |
+          ./scripts/Verify-Contracts.ps1
+          ./scripts/Test-ProjectStructure.ps1
+          ./scripts/Verify-Documentation.ps1
+      - name: Enforce source-only repository
+        shell: pwsh
+        run: |
+          $forbidden = @(git ls-files | Where-Object { $_ -match '(?i)\.(exe|dll|pdb|pak|utoc|ucas|zip|utrace)$' })
+          if ($forbidden.Count -gt 0) {
+            throw "Tracked delivery artifact(s): $($forbidden -join ', ')"
+          }
+          git diff --check
