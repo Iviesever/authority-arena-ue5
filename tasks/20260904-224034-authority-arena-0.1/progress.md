@@ -126,3 +126,10 @@ Result: exit `1` at missing `CoreMinimal.h`. MQB does not reconstruct `.uproject
 - `git push origin main` exited `0`.
 - Local `HEAD` and `git ls-remote origin refs/heads/main` both returned that SHA.
 - Generated `.mqb/`, `Artifacts/`, `Binaries/`, `Intermediate/`, and `Saved/` remained ignored and were not committed.
+
+## 2026-09-04 23:26 UTC+8 — Feature branch created
+
+- Final PACT-00 `origin/main`: `e35df954166ff558b824ce41386c26a68f684d24` after the evidence-only follow-up commit.
+- Created `feat/authority-arena-0.1` from that exact remote-tracking commit and pushed it.
+- First Draft PR command failed with GitHub GraphQL `No commits between main and feat/authority-arena-0.1`, because a branch at the identical baseline has no reviewable diff.
+- Corrective action: commit this factual feature-branch kickoff/evidence update, push it, then repeat Draft PR creation.
