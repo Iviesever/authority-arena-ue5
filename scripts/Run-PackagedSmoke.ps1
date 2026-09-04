@@ -4,22 +4,38 @@ param(
     [string] $ManifestPath,
 
     [ValidateRange(10, 180)]
-    [int] $TimeoutSeconds = 60
+    [int] $TimeoutSeconds = 60,
+
+    [switch] $Interactive
 )
 
 $ErrorActionPreference = 'Stop'
 $manifest = Get-Content -LiteralPath (Resolve-Path -LiteralPath $ManifestPath).Path -Raw | ConvertFrom-Json
 & (Join-Path $PSScriptRoot 'Verify-PackagedBuild.ps1') -ManifestPath $ManifestPath
-$artifactDirectory = Join-Path $manifest.outputDirectory 'RuntimeEvidence'
+$runId = [guid]::NewGuid().ToString('N')
+$stamp = Get-Date -Format 'yyyyMMdd-HHmmss'
+$mode = if ($Interactive) { 'Interactive' } else { 'Headless' }
+$processRole = "Packaged$mode"
+$artifactDirectory = Join-Path $manifest.outputDirectory "RuntimeEvidence\$stamp-$($runId.Substring(0, 8))"
 New-Item -ItemType Directory -Path $artifactDirectory -Force | Out-Null
 $logPath = Join-Path $artifactDirectory 'packaged-smoke.log'
+$eventPath = Join-Path $artifactDirectory 'packaged-smoke.jsonl'
+$reportPath = Join-Path $artifactDirectory 'packaged-smoke-report.json'
+$startedUtc = [datetime]::UtcNow
 
 $startInfo = [System.Diagnostics.ProcessStartInfo]::new()
 $startInfo.FileName = $manifest.mainExecutable
 $startInfo.UseShellExecute = $false
-foreach ($argument in @(
-    '-nullrhi', '-unattended', '-nosplash', '-NoSound', '-ExecCmds=quit', "-abslog=$logPath"
-)) {
+$launchArguments = @(
+    "-AuthorityRunId=$runId", "-AuthorityProcessRole=$processRole",
+    "-AuthorityEventLog=$eventPath", "-abslog=$logPath"
+)
+if ($Interactive) {
+    $launchArguments += @('-d3d11', '-windowed', '-ResX=1280', '-ResY=720', '-nosplash', '-AuthorityExitAfter=12')
+} else {
+    $launchArguments += @('-nullrhi', '-unattended', '-nosplash', '-NoSound', '-AuthorityExitAfter=8')
+}
+foreach ($argument in $launchArguments) {
     $startInfo.ArgumentList.Add($argument)
 }
 $process = [System.Diagnostics.Process]::Start($startInfo)
@@ -43,15 +59,47 @@ finally {
     }
 }
 
-if (-not (Test-Path -LiteralPath $logPath -PathType Leaf)) {
-    throw 'Packaged smoke produced no log.'
+if (-not (Test-Path -LiteralPath $eventPath -PathType Leaf)) {
+    throw 'Packaged smoke produced no structured event stream.'
 }
-foreach ($marker in @("Game class is 'AuthorityArenaGameMode'", 'AA_EVENT ArenaReady blocks=6')) {
-    if (-not (Select-String -LiteralPath $logPath -SimpleMatch $marker -Quiet)) {
-        throw "Packaged smoke log is missing '$marker'."
+$events = @(Get-Content -LiteralPath $eventPath | ForEach-Object { $_ | ConvertFrom-Json })
+if ($events.Count -lt 2) {
+    throw 'Packaged smoke event stream is unexpectedly short.'
+}
+foreach ($event in $events) {
+    if ($event.schemaVersion -ne 1 -or $event.runId -ne $runId -or
+        $event.processRole -ne $processRole) {
+        throw 'Packaged smoke event stream identity mismatch.'
     }
 }
-if (Select-String -LiteralPath $logPath -Pattern 'Fatal error:|Unhandled Exception:' -Quiet) {
+foreach ($eventName in @('ServerReady', 'ArenaReady')) {
+    if (@($events | Where-Object event -eq $eventName).Count -lt 1) {
+        throw "Packaged smoke event stream is missing $eventName."
+    }
+}
+if ((Test-Path -LiteralPath $logPath -PathType Leaf) -and
+    (Select-String -LiteralPath $logPath -Pattern 'Fatal error:|Unhandled Exception:' -Quiet)) {
     throw 'Packaged smoke log contains a fatal error.'
 }
-Write-Output "PASS packaged-smoke exe=$($manifest.mainExecutable) log=$logPath"
+$report = [ordered]@{
+    schemaVersion = 1
+    result = 'PASS'
+    runId = $runId
+    mode = $mode
+    sourceSha = $manifest.sourceSha
+    packageExecutableSha256 = $manifest.mainExecutableSha256
+    process = [ordered]@{
+        pid = $ownedId
+        exitCode = $process.ExitCode
+        executable = $ownedPath
+    }
+    observations = [ordered]@{
+        eventCount = $events.Count
+        serverReady = $true
+        arenaReady = $true
+        durationMs = [Math]::Round(([datetime]::UtcNow - $startedUtc).TotalMilliseconds, 3)
+    }
+    eventStream = $eventPath
+}
+$report | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath $reportPath -Encoding utf8NoBOM
+Write-Output "PASS packaged-smoke mode=$mode exe=$($manifest.mainExecutable) report=$reportPath"

@@ -51,7 +51,11 @@ $requiredFiles = @(
     'Source\AuthorityArena\Private\World\AuthorityArenaWorldBuilder.cpp',
     'scripts\Find-UE58.ps1',
     'scripts\Build.ps1',
-    'scripts\Run-Smoke.ps1'
+    'scripts\Run-Smoke.ps1',
+    'scripts\Package-Win64.ps1',
+    'scripts\Verify-PackagedBuild.ps1',
+    'scripts\Run-PackagedSmoke.ps1',
+    'scripts\RunMultiplayerScenario.ps1'
 )
 foreach ($relativePath in $requiredFiles) {
     Require-File $relativePath | Out-Null
@@ -79,6 +83,28 @@ $allCpp = Get-ChildItem -LiteralPath (Join-Path $repositoryRoot 'Source') -Recur
     Get-Content -Raw
 if ($allCpp -match 'BlueprintImplementableEvent|BlueprintNativeEvent') {
     throw 'PACT-00 source may not delegate required behavior to Blueprint events.'
+}
+
+$packagedSmoke = Get-Content -LiteralPath (Join-Path $repositoryRoot 'scripts\Run-PackagedSmoke.ps1') -Raw
+foreach ($requiredPackagedSmokeContract in @(
+    '[switch] $Interactive',
+    "'-d3d11'",
+    "@('ServerReady', 'ArenaReady')"
+)) {
+    if (-not $packagedSmoke.Contains($requiredPackagedSmokeContract, [StringComparison]::Ordinal)) {
+        throw "Packaged smoke runner is missing contract '$requiredPackagedSmokeContract'."
+    }
+}
+
+$multiplayerRunner = Get-Content -LiteralPath (Join-Path $repositoryRoot 'scripts\RunMultiplayerScenario.ps1') -Raw
+foreach ($requiredPackagedMultiplayerContract in @(
+    "[ValidateSet('Editor', 'Packaged')]",
+    '-PackageManifest is required when -Build Packaged.',
+    'Get-StructuredEventText'
+)) {
+    if (-not $multiplayerRunner.Contains($requiredPackagedMultiplayerContract, [StringComparison]::Ordinal)) {
+        throw "Multiplayer runner is missing packaged-build contract '$requiredPackagedMultiplayerContract'."
+    }
 }
 
 Write-Output "PASS project-structure files=$($requiredFiles.Count + 1) engine=5.8"

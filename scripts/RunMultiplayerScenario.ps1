@@ -7,13 +7,36 @@ param(
     [int] $TimeoutSeconds = 75,
 
     [ValidateSet('Baseline', 'Lag60', 'Lag120', 'Jitter', 'Loss')]
-    [string] $NetworkProfile = 'Baseline'
+    [string] $NetworkProfile = 'Baseline',
+
+    [ValidateSet('Editor', 'Packaged')]
+    [string] $Build = 'Editor',
+
+    [string] $PackageManifest
 )
 
 $ErrorActionPreference = 'Stop'
 $repositoryRoot = Split-Path -Parent $PSScriptRoot
 $projectPath = (Resolve-Path -LiteralPath (Join-Path $repositoryRoot 'AuthorityArena.uproject')).Path
 $ue = & (Join-Path $PSScriptRoot 'Find-UE58.ps1')
+$processExecutable = $ue.EditorCmd
+$processPrefixArguments = @($projectPath)
+$packageExecutableSha256 = $null
+$packageSourceSha = $null
+if ($Build -eq 'Packaged') {
+    if ([string]::IsNullOrWhiteSpace($PackageManifest)) {
+        throw '-PackageManifest is required when -Build Packaged.'
+    }
+    & (Join-Path $PSScriptRoot 'Verify-PackagedBuild.ps1') -ManifestPath $PackageManifest
+    $package = Get-Content -LiteralPath (Resolve-Path -LiteralPath $PackageManifest).Path -Raw | ConvertFrom-Json
+    $processExecutable = $package.mainExecutable
+    $processPrefixArguments = @()
+    $packageExecutableSha256 = $package.mainExecutableSha256
+    $packageSourceSha = $package.sourceSha
+    if ($NetworkProfile -ne 'Baseline') {
+        throw 'Packaged multi-process validation currently requires NetworkProfile Baseline so applied emulation can remain directly auditable.'
+    }
+}
 $runId = [guid]::NewGuid().ToString('N')
 $runStartedUtc = [datetime]::UtcNow
 $stamp = Get-Date -Format 'yyyyMMdd-HHmmss'
@@ -179,6 +202,18 @@ function Get-ValidatedEventCount {
     return $events.Count
 }
 
+function Get-StructuredEventText {
+    param([Parameter(Mandatory)][string] $Path)
+    return (@(
+        Get-Content -LiteralPath $Path |
+            Where-Object { -not [string]::IsNullOrWhiteSpace($_) } |
+            ForEach-Object {
+                $event = $_ | ConvertFrom-Json
+                "AA_EVENT event=$($event.event) context=$($event.context) $($event.details)"
+            }
+    ) -join "`n")
+}
+
 function Write-ExpectedFaultReport {
     param(
         [Parameter(Mandatory)][string] $Fault,
@@ -196,10 +231,13 @@ function Write-ExpectedFaultReport {
         runId = $runId
         scenario = $Scenario
         networkProfile = $NetworkProfile
+        build = $Build
         sourceSha = $sourceSha
         workingTreeDirty = $workingTreeDirty
         result = 'PASS_EXPECTED_FAULT'
         expectedFault = $Fault
+        packageExecutableSha256 = $packageExecutableSha256
+        packageSourceSha = $packageSourceSha
         assertions = $Assertions
         processes = @(
             [ordered]@{ role = $Server.Role; pid = $Server.Id; exitCode = $Server.Process.ExitCode },
@@ -266,8 +304,7 @@ try {
         $serverScenarioArguments += '-AuthorityMarkDead'
     }
 
-    $server = Start-OwnedProcess -Role 'Server' -Executable $ue.EditorCmd -Arguments (@(
-        $projectPath,
+    $server = Start-OwnedProcess -Role 'Server' -Executable $processExecutable -Arguments ($processPrefixArguments + @(
         '/Engine/Maps/Entry?listen',
         '-server',
         '-AuthorityProcessRole=Server',
@@ -277,10 +314,16 @@ try {
         "-abslog=$serverLog"
     ) + $commonArguments + $serverScenarioArguments)
     $ownedProcesses.Add($server)
-    Wait-LogMarkers -OwnedProcess $server -LogPath $serverLog -Markers @(
-        'IpNetDriver listening on port',
-        'AA_EVENT event=ServerReady'
-    ) -Deadline $deadline
+    if ($Build -eq 'Packaged') {
+        Wait-LogMarkers -OwnedProcess $server -LogPath $serverEvents -Markers @(
+            '"event":"ServerReady"'
+        ) -Deadline $deadline
+    } else {
+        Wait-LogMarkers -OwnedProcess $server -LogPath $serverLog -Markers @(
+            'IpNetDriver listening on port',
+            'AA_EVENT event=ServerReady'
+        ) -Deadline $deadline
+    }
 
     $clientExitAfter = if ($Scenario -eq 'Combat' -or $Scenario -eq 'ServerShutdown') { 16 } elseif ($Scenario -eq 'Watchdog') { 0 } else { 8 }
     $clientScenarioArguments = @()
@@ -308,8 +351,7 @@ try {
         $clientMovementArguments += '-AuthorityAutoMove'
         $clientMovementArguments += '-AuthorityMoveDuration=2'
     }
-    $client1 = Start-OwnedProcess -Role 'Client1' -Executable $ue.EditorCmd -Arguments (@(
-        $projectPath,
+    $client1 = Start-OwnedProcess -Role 'Client1' -Executable $processExecutable -Arguments ($processPrefixArguments + @(
         "127.0.0.1:$port`?PlayerId=Client1",
         '-game',
         '-AuthorityProcessRole=Client1',
@@ -328,8 +370,7 @@ try {
     }
     $client2ExitAfter = if ($Scenario -eq 'ClientDisconnect') { 6 } else { $clientExitAfter }
     $client2Port = if ($Scenario -eq 'SecondClientConnectFail') { Get-FreeUdpPort } else { $port }
-    $client2 = Start-OwnedProcess -Role 'Client2' -Executable $ue.EditorCmd -Arguments (@(
-        $projectPath,
+    $client2 = Start-OwnedProcess -Role 'Client2' -Executable $processExecutable -Arguments ($processPrefixArguments + @(
         "127.0.0.1:$client2Port`?PlayerId=Client2",
         '-game',
         '-AuthorityProcessRole=Client2',
@@ -340,17 +381,20 @@ try {
     $ownedProcesses.Add($client2)
 
     if ($Scenario -eq 'SecondClientConnectFail') {
-        Wait-LogMarkers -OwnedProcess $client1 -LogPath $client1Log -Markers @(
+        $client1ReadySource = if ($Build -eq 'Packaged') { $client1Events } else { $client1Log }
+        Wait-LogMarkers -OwnedProcess $client1 -LogPath $client1ReadySource -Markers @(
             'local_role=AutonomousProxy'
         ) -Deadline $deadline
-        Wait-LogMarkers -OwnedProcess $client2 -LogPath $client2Log -Markers @(
-            'AA_EVENT event=NetworkFailure'
+        $client2FailureSource = if ($Build -eq 'Packaged') { $client2Events } else { $client2Log }
+        $networkFailureMarker = if ($Build -eq 'Packaged') { '"event":"NetworkFailure"' } else { 'AA_EVENT event=NetworkFailure' }
+        Wait-LogMarkers -OwnedProcess $client2 -LogPath $client2FailureSource -Markers @(
+            $networkFailureMarker
         ) -Deadline $deadline
         Wait-OwnedExit -OwnedProcess $client2 -Deadline $deadline
         Wait-OwnedExit -OwnedProcess $client1 -Deadline $deadline
         Wait-OwnedExit -OwnedProcess $server -Deadline $deadline
-        $serverText = Get-Content -LiteralPath $serverLog -Raw
-        $client2Text = Get-Content -LiteralPath $client2Log -Raw
+        $serverText = if ($Build -eq 'Packaged') { Get-StructuredEventText $serverEvents } else { Get-Content -LiteralPath $serverLog -Raw }
+        $client2Text = if ($Build -eq 'Packaged') { Get-StructuredEventText $client2Events } else { Get-Content -LiteralPath $client2Log -Raw }
         Require-Text $serverText 'player=Client1 count=1' 'server kept first client connected'
         if ($serverText.Contains('player=Client2 count=', [StringComparison]::Ordinal)) {
             throw 'Server unexpectedly accepted Client2 on the deliberately unused port.'
@@ -377,24 +421,29 @@ try {
     )
     if ($Scenario -eq 'ConnectionMovement' -or $Scenario -eq 'Lifecycle' -or
         $Scenario -eq 'AttackFlood') {
-        $clientReadyMarkers += 'AA_EVENT event=AutoMoveComplete'
+        $clientReadyMarkers += if ($Build -eq 'Packaged') { '"event":"AutoMoveComplete"' } else { 'AA_EVENT event=AutoMoveComplete' }
     }
-    Wait-LogMarkers -OwnedProcess $client1 -LogPath $client1Log -Markers $clientReadyMarkers -Deadline $deadline
-    Wait-LogMarkers -OwnedProcess $client2 -LogPath $client2Log -Markers $clientReadyMarkers -Deadline $deadline
+    $client1ReadySource = if ($Build -eq 'Packaged') { $client1Events } else { $client1Log }
+    $client2ReadySource = if ($Build -eq 'Packaged') { $client2Events } else { $client2Log }
+    Wait-LogMarkers -OwnedProcess $client1 -LogPath $client1ReadySource -Markers $clientReadyMarkers -Deadline $deadline
+    Wait-LogMarkers -OwnedProcess $client2 -LogPath $client2ReadySource -Markers $clientReadyMarkers -Deadline $deadline
 
     if ($Scenario -eq 'ServerShutdown') {
         Wait-OwnedExit -OwnedProcess $server -Deadline $deadline
-        Wait-LogMarkers -OwnedProcess $client1 -LogPath $client1Log -Markers @(
-            'AA_EVENT event=NetworkFailure'
+        $client1FailureSource = if ($Build -eq 'Packaged') { $client1Events } else { $client1Log }
+        $client2FailureSource = if ($Build -eq 'Packaged') { $client2Events } else { $client2Log }
+        $networkFailureMarker = if ($Build -eq 'Packaged') { '"event":"NetworkFailure"' } else { 'AA_EVENT event=NetworkFailure' }
+        Wait-LogMarkers -OwnedProcess $client1 -LogPath $client1FailureSource -Markers @(
+            $networkFailureMarker
         ) -Deadline $deadline
-        Wait-LogMarkers -OwnedProcess $client2 -LogPath $client2Log -Markers @(
-            'AA_EVENT event=NetworkFailure'
+        Wait-LogMarkers -OwnedProcess $client2 -LogPath $client2FailureSource -Markers @(
+            $networkFailureMarker
         ) -Deadline $deadline
         Wait-OwnedExit -OwnedProcess $client1 -Deadline $deadline
         Wait-OwnedExit -OwnedProcess $client2 -Deadline $deadline
-        $serverText = Get-Content -LiteralPath $serverLog -Raw
-        $client1Text = Get-Content -LiteralPath $client1Log -Raw
-        $client2Text = Get-Content -LiteralPath $client2Log -Raw
+        $serverText = if ($Build -eq 'Packaged') { Get-StructuredEventText $serverEvents } else { Get-Content -LiteralPath $serverLog -Raw }
+        $client1Text = if ($Build -eq 'Packaged') { Get-StructuredEventText $client1Events } else { Get-Content -LiteralPath $client1Log -Raw }
+        $client2Text = if ($Build -eq 'Packaged') { Get-StructuredEventText $client2Events } else { Get-Content -LiteralPath $client2Log -Raw }
         Require-Text $serverText 'event=ServerScenarioComplete' 'server performed early controlled shutdown'
         Require-Text $client1Text 'event=NetworkFailure' 'Client1 observed server shutdown'
         Require-Text $client2Text 'event=NetworkFailure' 'Client2 observed server shutdown'
@@ -421,9 +470,9 @@ try {
     Wait-OwnedExit -OwnedProcess $client2 -Deadline $deadline
     Wait-OwnedExit -OwnedProcess $server -Deadline $deadline
 
-    $serverText = Get-Content -LiteralPath $serverLog -Raw
-    $client1Text = Get-Content -LiteralPath $client1Log -Raw
-    $client2Text = Get-Content -LiteralPath $client2Log -Raw
+    $serverText = if ($Build -eq 'Packaged') { Get-StructuredEventText $serverEvents } else { Get-Content -LiteralPath $serverLog -Raw }
+    $client1Text = if ($Build -eq 'Packaged') { Get-StructuredEventText $client1Events } else { Get-Content -LiteralPath $client1Log -Raw }
+    $client2Text = if ($Build -eq 'Packaged') { Get-StructuredEventText $client2Events } else { Get-Content -LiteralPath $client2Log -Raw }
     $eventCounts = [ordered]@{
         server = Get-ValidatedEventCount -Path $serverEvents -ExpectedRole 'Server'
         client1 = Get-ValidatedEventCount -Path $client1Events -ExpectedRole 'Client1'
@@ -436,17 +485,17 @@ try {
         }
     }
 
-    if ($network.lagMs -gt 0) {
+    if ($Build -eq 'Editor' -and $network.lagMs -gt 0) {
         foreach ($logText in @($serverText, $client1Text, $client2Text)) {
             Require-Text $logText "PktLag set to $($network.lagMs)" "$NetworkProfile lag applied"
         }
     }
-    if ($network.lagVarianceMs -gt 0) {
+    if ($Build -eq 'Editor' -and $network.lagVarianceMs -gt 0) {
         foreach ($logText in @($serverText, $client1Text, $client2Text)) {
             Require-Text $logText "PktLagVariance set to $($network.lagVarianceMs)" "$NetworkProfile variance applied"
         }
     }
-    if ($network.lossPercent -gt 0) {
+    if ($Build -eq 'Editor' -and $network.lossPercent -gt 0) {
         foreach ($logText in @($serverText, $client1Text, $client2Text)) {
             Require-Text $logText "PktLoss set to $($network.lossPercent)" "$NetworkProfile loss applied"
         }
@@ -635,10 +684,13 @@ try {
         runId = $runId
         scenario = $Scenario
         networkProfile = $NetworkProfile
+        build = $Build
         sourceSha = $sourceSha
         workingTreeDirty = $workingTreeDirty
         port = $port
         result = 'PASS'
+        packageExecutableSha256 = $packageExecutableSha256
+        packageSourceSha = $packageSourceSha
         observations = [ordered]@{
             configuredLagMs = $network.lagMs
             configuredLagVarianceMs = $network.lagVarianceMs

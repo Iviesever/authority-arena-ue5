@@ -38,6 +38,8 @@ void AAuthorityArenaGameMode::BeginPlay()
         if (IsValid(Arena))
         {
             UE_LOG(LogAuthorityArena, Display, TEXT("AA_EVENT ArenaReady blocks=6"));
+            UAuthorityArenaNetworkDiagnosticsSubsystem::EmitEvent(
+                this, TEXT("ArenaReady"), TEXT("blocks=6"));
         }
         else
         {
