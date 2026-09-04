@@ -100,11 +100,17 @@ $multiplayerRunner = Get-Content -LiteralPath (Join-Path $repositoryRoot 'script
 foreach ($requiredPackagedMultiplayerContract in @(
     "[ValidateSet('Editor', 'Packaged')]",
     '-PackageManifest is required when -Build Packaged.',
-    'Get-StructuredEventText'
+    'Get-StructuredEventText',
+    '-AuthoritySuppressHostPawn'
 )) {
     if (-not $multiplayerRunner.Contains($requiredPackagedMultiplayerContract, [StringComparison]::Ordinal)) {
         throw "Multiplayer runner is missing packaged-build contract '$requiredPackagedMultiplayerContract'."
     }
+}
+
+$gameModeSource = Get-Content -LiteralPath (Join-Path $repositoryRoot 'Source\AuthorityArena\Private\Game\AuthorityArenaGameMode.cpp') -Raw
+if (-not $gameModeSource.Contains('AuthoritySuppressHostPawn', [StringComparison]::Ordinal)) {
+    throw 'GameMode is missing explicit packaged listen-server host-pawn suppression for E2E.'
 }
 
 $packageScript = Get-Content -LiteralPath (Join-Path $repositoryRoot 'scripts\Package-Win64.ps1') -Raw

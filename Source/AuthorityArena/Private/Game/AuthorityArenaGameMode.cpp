@@ -32,6 +32,25 @@ void AAuthorityArenaGameMode::BeginPlay()
 
     if (HasAuthority() && GetWorld() != nullptr)
     {
+        if (GetNetMode() == NM_ListenServer &&
+            FParse::Param(FCommandLine::Get(), TEXT("AuthoritySuppressHostPawn")))
+        {
+            APlayerController* HostController = GetWorld()->GetFirstPlayerController();
+            APawn* HostPawn = IsValid(HostController) && HostController->IsLocalController()
+                ? HostController->GetPawn()
+                : nullptr;
+            if (IsValid(HostPawn))
+            {
+                const FString HostPawnName = HostPawn->GetName();
+                HostController->UnPossess();
+                HostPawn->Destroy();
+                UAuthorityArenaNetworkDiagnosticsSubsystem::EmitEvent(
+                    this,
+                    TEXT("AutomationHostPawnSuppressed"),
+                    FString::Printf(TEXT("pawn=%s"), *HostPawnName));
+            }
+        }
+
         AAuthorityArenaWorldBuilder* Arena = GetWorld()->SpawnActor<AAuthorityArenaWorldBuilder>(
             AAuthorityArenaWorldBuilder::StaticClass(),
             FTransform::Identity);

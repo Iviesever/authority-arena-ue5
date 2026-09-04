@@ -218,7 +218,8 @@ function Get-StructuredEventText {
             Where-Object { -not [string]::IsNullOrWhiteSpace($_) } |
             ForEach-Object {
                 $event = $_ | ConvertFrom-Json
-                "AA_EVENT event=$($event.event) context=$($event.context) $($event.details)"
+                $normalizedContext = $event.context -replace '_\d+$', '_0'
+                "AA_EVENT event=$($event.event) context=$normalizedContext $($event.details)"
             }
     ) -join "`n")
 }
@@ -314,6 +315,9 @@ try {
     }
     if ($Scenario -eq 'DeadAbility') {
         $serverScenarioArguments += '-AuthorityMarkDead'
+    }
+    if ($Build -eq 'Packaged') {
+        $serverScenarioArguments += '-AuthoritySuppressHostPawn'
     }
 
     $server = Start-OwnedProcess -Role 'Server' -Executable $processExecutable -Arguments ($processPrefixArguments + @(
