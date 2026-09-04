@@ -528,15 +528,15 @@ baseline 连续至少三次；每次端口不同、runId 不同、结果通过�
 - `Package-Win64.ps1 -Configuration Shipping -OutputDirectory Artifacts/package/<sha>` 调用 RunUAT BuildCookRun，并输出 manifest JSON。
 - manifest 包含 source SHA、Build/Cook/Stage/Pak/IoStore/Archive 结果、根路径、总大小、主 exe SHA-256、文件树摘要。
 
-- [ ] **Step 1：RED—交付验证器拒绝缺失产物**
+- [x] **Step 1：RED—交付验证器拒绝缺失产物**
 
 先运行 `Verify-PackagedBuild.ps1`，预期因 manifest/exe/Pak/哈希缺失失败。
 
-- [ ] **Step 2：运行完整自动化**
+- [x] **Step 2：运行完整自动化**
 
 Core MQB tests、ProjectStructure、UE `AuthorityArena.*` Automation、headless、interactive、Editor Development、Game Development、Game Shipping 全部从脚本运行并记录 exit code。
 
-- [ ] **Step 3：RunUAT BuildCookRun**
+- [x] **Step 3：RunUAT BuildCookRun**
 
 ```powershell
 & $RunUat BuildCookRun -project="$Project" -noP4 -platform=Win64 `
@@ -546,11 +546,11 @@ Core MQB tests、ProjectStructure、UE `AuthorityArena.*` Automation、headless�
 
 若项目未启用 IoStore，移除 `-iostore` 并把该项记为 NOT APPLICABLE（附配置证据），不能假报通过。
 
-- [ ] **Step 4：验证打包普通启动与双客户端**
+- [x] **Step 4：验证打包普通启动与双客户端**
 
 先启动单个打包 exe 可交互窗口取得 Ready/退出证据；再用 packaged server + two clients 跑 baseline 与至少一项 lag 场景，验证同一功能断言。
 
-- [ ] **Step 5：计算产物证据**
+- [x] **Step 5：计算产物证据**
 
 使用 `Get-FileHash -Algorithm SHA256` 计算主 exe/Pak/manifest；记录总大小、本地路径、源 SHA。所有产物仍位于 ignored `Artifacts/`。
 
@@ -586,15 +586,15 @@ Core MQB tests、ProjectStructure、UE `AuthorityArena.*` Automation、headless�
 - README 首屏回答产品价值、运行方式、真实多进程证据、预测/权威边界、限制和 AI 参与。
 - AI 披露逐字保持：用户定义目标/范围/约束；Codex GPT-5.6 Sol 完成架构细化、代码、测试、调试、打包、审计和文档；用户未独立手写本次代码；不能声称完全手写；面试前需理解架构并完成至少一次 Drill。
 
-- [ ] **Step 1：文档事实检查 RED**
+- [x] **Step 1：文档事实检查 RED**
 
 创建 `scripts/Verify-Documentation.ps1`，检查所有必需文档、README 八项首屏答案、AI 披露、代码类型/RPC/命令与仓库实际匹配。首次因文档缺失失败。
 
-- [ ] **Step 2：编写作品集与面试材料**
+- [x] **Step 2：编写作品集与面试材料**
 
 逐项引用真实命令、报告和限制；`ROLLBACK_VS_UE_REPLICATION.md` 比较目标、所有权、预测、纠错、带宽、确定性和适用场景；Live Drills 提供 Energy 恢复、Dash 拒绝条件、RepNotify UI 三个独立小改动及验证命令。
 
-- [ ] **Step 3：文档验证 GREEN**
+- [x] **Step 3：文档验证 GREEN**
 
 运行 `Verify-Documentation.ps1`，再人工逐项比对 README 与当前代码/报告，不把未跑配置写成 PASS。
 

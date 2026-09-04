@@ -55,7 +55,9 @@ $requiredFiles = @(
     'scripts\Package-Win64.ps1',
     'scripts\Verify-PackagedBuild.ps1',
     'scripts\Run-PackagedSmoke.ps1',
-    'scripts\RunMultiplayerScenario.ps1'
+    'scripts\RunMultiplayerScenario.ps1',
+    'scripts\Verify-CleanSource.ps1',
+    'scripts\Verify-Documentation.ps1'
 )
 foreach ($relativePath in $requiredFiles) {
     Require-File $relativePath | Out-Null

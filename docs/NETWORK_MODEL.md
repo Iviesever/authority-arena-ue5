@@ -13,6 +13,8 @@ server process (authority, no local player)
   -> replicated actors/state ----- both clients (SimulatedProxy for peer)
 ```
 
+The packaged Development variant is a ListenServer Game process because the installed distribution has no Server target. Its explicit automation flag unpossesses and destroys the local host Pawn before remote clients join. The PlayerController/PlayerState remain engine-owned host bookkeeping, but authority snapshots and combat contain only Client1 and Client2. Shipping packaging is independently built/launched and is not used for URL-driven client connection because UE disables that command-line override by default.
+
 ## Object ownership
 
 | Object | Exists on server | Replicates to clients | Authoritative data |

@@ -291,3 +291,35 @@ Result: exit `1` at missing `CoreMinimal.h`. MQB does not reconstruct `.uproject
 - Final clean capture source: `3611c5ff740706bc38680a2cb3c5b43bc94856d4`, run `5d257488a3d2416eaab4ff13e5420508`, Lag60, 1680×560, 635,976 bytes, PNG SHA-256 `374FDBF5DE651D8E670990C64627B67E5588051AC84C0290B7CE4ABCD962DA28`, owned leak 0.
 - Architecture/replication/GAS diagrams were generated from actual class/RPC names and visually inspected for clipping and flow accuracy.
 - PACT-50 complete; PACT-60 full build/package/clean-source delivery begins next.
+
+## 2026-09-05 02:38 UTC+8 — PACT-60 build and Automation gate
+
+- MQB Core passed 41 assertions.
+- `AuthorityArenaEditor Win64 Development` and `AuthorityArena Win64 Shipping` both succeeded after reverting an invalid attempt to enable general Shipping logging against precompiled shared Engine libraries.
+- `Run-Automation.ps1` passed all three `AuthorityArena.*` tests; Editor three-process Combat run `ddf8e7a16acd4de69bceca3f6f172ff3` passed.
+- Shipping runtime evidence was moved to structured JSONL (`ServerReady`, `ArenaReady`) instead of depending on logs disabled by Shipping.
+
+## 2026-09-05 02:47 UTC+8 — Shipping package RED/GREEN and payload identity
+
+- RunUAT BuildCookRun completed Build, full Cook (493 cooked / 500 total), Stage, Pak, IoStore and Archive for clean source `3ecfd91cb043802c1ddce4380eb3cbee2029c0cf`.
+- The first manifest hashed only the stable bootstrap EXE; stronger tests required the real game EXE and all runtime `.exe/.dll/.pak/.utoc/.ucas` files.
+- Enhanced verification exposed two real manifest bugs: ordered-dictionary byte aggregation produced zero, then unsorted dictionary serialization produced a non-reproducible fingerprint. Both failed before acceptance and were fixed with explicit numeric aggregation and sorted `PSCustomObject` entries.
+- Passing Shipping manifest: `Artifacts/package/3ecfd91c-20260905-024553/package-manifest.json`; game EXE SHA-256 `1F4E81EAE5E73BEE3239D90D36727C779C9BF24B69EA605BC4B7BFC3C9E16FC9`; package fingerprint `6560893316FAFD46B662C6C21BD4868DB24232BDD0FEB589F0F4D06975699C8C`; payload bytes `442058175`.
+- Shipping headless packaged smoke passed with exact runId/role JSONL. One later UAT retry lost its process-owned Zen instance between Cook and Stage; failure remained in its unique directory and the fresh-directory rerun succeeded through `-StartZenServerForStage`.
+
+## 2026-09-05 02:57 UTC+8 — Packaged two-client topology RED/GREEN
+
+- Shipping `Map?listen` and client URL probes produced `NM_Standalone`. Local UE 5.8 source at `Engine/Private/GameInstance.cpp` confirmed `UE_ALLOW_MAP_OVERRIDE_IN_SHIPPING=0`; the runner now rejects Shipping packaged E2E explicitly instead of accepting false standalone runs.
+- The first Development archive completed UAT but exposed an incorrect assumption that its internal EXE name carried a configuration suffix. Discovery was fixed to select the project EXE under `AuthorityArena/Binaries/Win64` and verified on the real archive tree.
+- First Development packaged Combat reached a real ListenServer plus two clients, but the host Pawn overlapped Client1 at spawn and displaced its predicted Dash laterally, so authority projectiles missed Client2. The failing JSONL proved no damage/death/score.
+- Minimal fix: the packaged runner passes `-AuthoritySuppressHostPawn`; GameMode removes only the automation ListenServer host Pawn. JSON assertion text also normalizes packaged numeric object suffixes without changing original JSONL.
+- Clean Development package source `f7fc7c1fb3e4964842aeca62a4d0559f90924b85`: manifest `Artifacts/package/f7fc7c1f-20260905-025507/package-manifest.json`; game EXE SHA-256 `90FC08E1F29C31D09243A9CED12D791820CE99D95B38BF16AA35695255D8E5C2`; fingerprint `0E1A7F190C6128F8A4F20B756B763CEDF815F84595078E263522F5399023D603`; payload bytes `652230359`.
+- Packaged Combat run `627d937a49fb48b9bd934903220c6572` passed with three distinct processes, two remote combat Pawns, Dash/Shield prediction and confirmation, first-hit 34→17 mitigation, four server projectiles, Death, Respawn and Score.
+- Development packaged interactive D3D11 run `1f8fa321fdf04478a65f6f46739b4ab8` opened a real window, initialized RHI/audio/Slate/IoStore, emitted `ServerReady` + `ArenaReady`, and exited 0 by its owned timer.
+
+## 2026-09-05 03:05 UTC+8 — PACT-70 documentation RED/GREEN
+
+- RED: `Verify-Documentation.ps1` failed on missing `README_ZH.md`.
+- Authored English/Chinese READMEs, Testing, Known Limitations, AI Assistance, Code Walkthrough, Interview Guide, three independent Live Change Drills, Rollback comparison, Release Notes, and source-contract CI.
+- GREEN: documentation verifier passed 17 required files, eight README first-page answers, five exact AI disclosure statements, all interview topics, three drills, rollback dimensions, and the no-custom-assets policy.
+- Added `Verify-CleanSource.ps1`; structure verifier first failed on its absence, then passed after the bounded unique-clone implementation. Clean-source execution remains the next gate.

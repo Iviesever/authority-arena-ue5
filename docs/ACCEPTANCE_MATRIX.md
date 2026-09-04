@@ -65,4 +65,4 @@ Statuses are `NOT RUN`, `RED`, `PASS`, `FAIL`, or `N/A` with a reason. `PASS` re
 
 ## Current release decision
 
-`NOT ELIGIBLE`: P0 implementation and verification have not run. No tag or Release may be created.
+`NOT ELIGIBLE YET`: PACT-00 through PACT-50 are complete and PACT-60 package/runtime checks have passing development evidence. Final clean-source verification, current-SHA full rerun, CI, independent audit, merge, tag, and source-only Release remain mandatory; no tag or Release may be created before those rows pass.

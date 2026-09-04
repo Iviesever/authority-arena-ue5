@@ -9,9 +9,15 @@ pwsh -NoProfile -File .\scripts\RunMultiplayerScenario.ps1 `
 pwsh -NoProfile -File .\scripts\Invoke-NetworkMatrix.ps1
 pwsh -NoProfile -File .\scripts\Invoke-FailureMatrix.ps1
 pwsh -NoProfile -File .\scripts\tests\RunMultiplayerScenario.Tests.ps1
+
+$developmentManifest = 'D:\local\Artifacts\package\development\package-manifest.json'
+pwsh -NoProfile -File .\scripts\RunMultiplayerScenario.ps1 -Build Packaged `
+  -PackageManifest $developmentManifest -Scenario Combat
 ```
 
 Every run discovers UE 5.8, reserves a temporary UDP port, creates a 32-character RunId and unique ignored artifact directory, then launches exactly one server and two independent client processes. Because the installed Epic distribution cannot build `TargetType.Server`, the server is a separate `UnrealEditor-Cmd -server -nullrhi` process; runtime net mode is dedicated, but no Dedicated Server target binary is claimed.
+
+For packaged E2E, the manifest must identify a Development build. UE Shipping clears command-line map/URL overrides under its default security macro, so the runner rejects a Shipping manifest before launch. Development Game produces a ListenServer host; `-AuthoritySuppressHostPawn` removes only the automation host Pawn, leaving the server process plus Client1 and Client2 as the tested combat actors. Package configuration and payload hashes are recorded in the report.
 
 ## Process ownership and cleanup
 
@@ -34,6 +40,8 @@ Each process receives a separate `-AuthorityEventLog=<path>` and `-AuthorityProc
 ```
 
 The runner parses every non-empty line, checks schema 1, exact RunId/role and strictly increasing sequence, and records the three event counts in `report.json`. Text logs remain the detailed UE diagnostic source; JSONL is the stable machine-readable event contract.
+
+Shipping does not enable general logs in this installed shared-engine build. Packaged readiness and assertions therefore consume JSONL directly; object numeric suffixes are normalized only in the synthetic assertion text, while original JSONL stays unchanged.
 
 ## Network profiles
 

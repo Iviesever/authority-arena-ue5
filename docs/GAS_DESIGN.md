@@ -58,7 +58,7 @@ Only server overlap constructs `UAuthorityArenaGE_ProjectileDamage` and applies 
 
 ## Shield / Block
 
-`UGA_Shield` is LocalPredicted. Commit applies native cost/cooldown effects and a 2-second duration effect granting `State.Shield.Active`. Damage reads the replicated GAS tag on authority and applies a fixed 0.5 multiplier. UI will derive Shield state from ASC tags; it will not maintain an independent truth.
+`UGA_Shield` is LocalPredicted. Commit applies native cost/cooldown effects and a 2-second duration effect granting `State.Shield.Active`. Damage reads the replicated GAS tag on authority and applies a fixed 0.5 multiplier. The C++ HUD derives Shield state from ASC tags; it does not maintain an independent truth.
 
 ## Verified scripted flow
 
