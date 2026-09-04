@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "runId": "30747fa958414195af10d4778f35c6f0",
+  "scenario": "Combat",
+  "sourceSha": "76768924242df93c1635bcbb061d83de9368bb70",
+  "workingTreeDirty": false,
+  "result": "PASS",
+  "processes": {
+    "distinct": 3,
+    "allExitZero": true,
+    "ownedProcessLeakCount": 0
+  },
+  "assertions": {
+    "dashPredicted": true,
+    "dashConfirmed": true,
+    "projectilesSpawnedByServer": 4,
+    "firstHitRawDamage": 34.0,
+    "firstHitAppliedDamageWithShield": 17.0,
+    "laterUnshieldedDamage": 34.0,
+    "client2DeathCount": 1,
+    "client1Score": 1,
+    "client2Respawned": true,
+    "savedMoveWarningCount": 0,
+    "bothDisconnectedCleanly": true
+  }
+}

@@ -202,3 +202,14 @@ Result: exit `1` at missing `CoreMinimal.h`. MQB does not reconstruct `.uproject
 - Run `00180bf2b10a4cc58c878a20b11f3a8c` passed with final server/client Client1 `x=-600`, Energy `0`, three exit-0 owned PIDs.
 - A concurrently observed short-lived UnrealEditor-Cmd process was read-only identified as another project (`D:\program\cookscope-ue5`) and was not touched.
 - Both PACT-20 real runs were dirty development evidence. Commit and clean-source-bound reruns remain required.
+
+## 2026-09-05 00:51 UTC+8 — PACT-20 final clean matrix
+
+- Implementation commit: `b23b926`; clean-build-only Unity collision then exposed duplicate anonymous test helper names. Renaming the GAS helper produced fix commit `76768924242df93c1635bcbb061d83de9368bb70`.
+- `AuthorityArenaEditor Win64 Development`: succeeded/up to date from clean worktree.
+- `AuthorityArena.GAS`: succeeded 1, failed/not-run/in-process 0.
+- `AuthorityArena.Network`: succeeded 1, failed/not-run/in-process 0.
+- Combat: run `30747fa958414195af10d4778f35c6f0`, port 58054, source `7676892`, dirty=false. Dash/Shield prediction+confirmation, four server projectiles, 34→17 shield mitigation, Health 0, Client2 Deaths 1, Client1 Score 1, respawn, both disconnect, all three owned PIDs exit 0, saved-move warnings 0.
+- DashRejected: run `a9af7e12e07a4aa0b18e61cb44b18fe2`, port 61060, source `7676892`, dirty=false. Client predicted; server Energy 0 and `Failure.Resource`; final server/client x=-600 and Energy=0; all owned PIDs exit 0.
+- Sanitized evidence: `docs/examples/pact20-combat-report.json`, `docs/examples/pact20-dash-rejection-report.json`.
+- PACT-20 complete. PACT-30 fail-closed abuse paths are next.

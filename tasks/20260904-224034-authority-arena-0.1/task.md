@@ -370,11 +370,11 @@ UnrealEditor-Cmd.exe AuthorityArena.uproject -unattended -nullrhi `
 
 GameplayEffect/Tag 表达持续状态，固定周期消耗 Energy；能量耗尽/死亡/取消时移除。UI 只读取 ASC/Attributes。
 
-- [ ] **Step 7：运行单元、UE Automation 和真实三进程能力场景**
+- [x] **Step 7：运行单元、UE Automation 和真实三进程能力场景**
 
 验证 Dash 预测+确认、至少一次 Dash 拒绝、Projectile 命中、Shield 减伤、Death、Respawn、Score，以及三进程最终状态一致。
 
-- [ ] **Step 8：文档、证据、提交**
+- [x] **Step 8：文档、证据、提交**
 
 更新 `GAS_DESIGN.md` 的 Prediction Key、Spec 生命周期、cost/cooldown/Tag 流；提交 `feat: implement predicted GAS combat abilities` 并 push。
 

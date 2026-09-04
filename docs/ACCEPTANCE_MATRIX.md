@@ -27,10 +27,10 @@ Statuses are `NOT RUN`, `RED`, `PASS`, `FAIL`, or `N/A` with a reason. `PASS` re
 | PACT-10.06 | Replicated properties and RepNotify | PASS | `AuthorityArena.Network.ReplicationContract`, succeeded 1, failed 0 |
 | PACT-10.07 | Reliable Server RPC, bounded unreliable RPC, Client RPC, presentation Multicast | PASS | UHT flag reflection + Lifecycle `MatchPulse` on all three processes |
 | PACT-10.08 | Destroy/respawn/disconnect leaves no dangling reference | PASS | Lifecycle report: one destroy/one respawn/count 2/two disconnects/zero process leaks |
-| PACT-20.01 | Predicted GAS Dash with cost/cooldown/confirmation/rejection | NOT RUN | — |
-| PACT-20.02 | Server-spawned projectile and GameplayEffect damage | NOT RUN | — |
-| PACT-20.03 | GAS Tag/Effect Shield with energy and damage reduction | NOT RUN | — |
-| PACT-20.04 | ASC/AttributeSet/Ability/Effect/Tags/Cue boundary/Prediction Key/Spec lifecycle | NOT RUN | — |
+| PACT-20.01 | Predicted GAS Dash with cost/cooldown/confirmation/rejection | PASS | Clean Combat + DashRejected reports at SHA `7676892`; client prediction/server confirm and resource rejection/correction |
+| PACT-20.02 | Server-spawned projectile and GameplayEffect damage | PASS | Combat: four server deferred spawns/impacts; 34-damage GameplayEffect; no client damage parameter |
+| PACT-20.03 | GAS Tag/Effect Shield with energy and damage reduction | PASS | Native duration tag/effect; clean Combat first hit raw 34/applied 17, later 34 |
+| PACT-20.04 | ASC/AttributeSet/Ability/Effect/Tags/Cue boundary/Prediction Key/Spec lifecycle | PASS | GAS Automation 1/1 + clean multi-process evidence; ASC on PlayerState Mixed, native effects/tags/specs, impact multicast boundary |
 | PACT-30.01 | Client cannot set Health or Score | NOT RUN | — |
 | PACT-30.02 | Client cannot forge damage or exceed attack rate | NOT RUN | — |
 | PACT-30.03 | Energy/dead/target/respawn/RPC validation fails closed | NOT RUN | — |
