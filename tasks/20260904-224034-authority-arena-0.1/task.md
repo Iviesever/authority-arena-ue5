@@ -409,11 +409,11 @@ GameplayEffect/Tag 表达持续状态，固定周期消耗 Energy；能量耗尽
 
 所有 RPC/ability 路径在任何 mutation 前完成 Core 判定；客户端提供的数值只可作为不可信观测且不能进入 damage/score 计算；死亡/respawn 使用幂等门闩与弱引用 timer。
 
-- [ ] **Step 4：GREEN 与真实攻击注入**
+- [x] **Step 4：GREEN 与真实攻击注入**
 
 运行 UE Automation，再运行多进程 `RejectedAbility`、`AttackFlood`、`InvalidTarget` 场景；服务器报告必须含稳定拒绝码，权威快照不变，客户端最终重新一致。
 
-- [ ] **Step 5：提交**
+- [x] **Step 5：提交**
 
 更新威胁边界与“不宣称生产级反作弊/加密”，提交 `feat: enforce server-authoritative request validation` 并 push。
 

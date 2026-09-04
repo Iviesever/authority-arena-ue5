@@ -231,3 +231,17 @@ Result: exit `1` at missing `CoreMinimal.h`. MQB does not reconstruct `.uproject
 - `DeadAbility` run `0bc19c7207954ed6b5667cd6fd33bec5`: actual server Health 0 + `State.Dead`, normal GAS attack rejected, no Projectile.
 - `DuplicateRespawn` first exposed an irrelevant movement assertion after stable respawn at x=600. Logs already proved two requests, `RespawnPending`, and one replacement. Removing movement from this lifecycle-only scenario produced passing run `ca0152d66899444e98520b0d8a2b7fcc`.
 - All were dirty development evidence; clean-commit full negative matrix remains mandatory.
+
+## 2026-09-05 01:12 UTC+8 — PACT-30 final clean matrix
+
+- Source: `148a1b1b71870c02897103daae9fea1045bb15fe`, working tree clean before the matrix.
+- MQB Core: 41 assertions pass.
+- Network and GAS Automation: each succeeded 1, failed/not-run/in-process 0.
+- DashRejected `41bda348f4884b1d9ae6fe5c6c467a8d`: actual zero-Energy server rejection and client correction.
+- AuthorityAbuse `f8bb4c66b7a34499b2a173b0af90f4b5`: state write, damage, invalid/out-of-range target and duplicate sequence rejected; state unchanged.
+- AttackFlood `6d42c540499a4a76becb3f1726220881`: one accepted, three RateLimited; state unchanged.
+- DeadAbility `9c32a7b11eb14336b08eeca1cfa3bb58`: Health 0 + State.Dead, ability rejected, no Projectile.
+- DuplicateRespawn `038df5e3b9424b1a990f8aeba1431c7b`: two requests, pending rejection, exactly one replacement.
+- Every scenario used three owned processes, all exit 0, owned PID leak count 0.
+- Sanitized combined evidence: `docs/examples/pact30-authority-report.json`.
+- PACT-30 complete; PACT-40 network/failure orchestration is next.

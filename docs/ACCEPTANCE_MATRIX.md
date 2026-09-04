@@ -31,10 +31,10 @@ Statuses are `NOT RUN`, `RED`, `PASS`, `FAIL`, or `N/A` with a reason. `PASS` re
 | PACT-20.02 | Server-spawned projectile and GameplayEffect damage | PASS | Combat: four server deferred spawns/impacts; 34-damage GameplayEffect; no client damage parameter |
 | PACT-20.03 | GAS Tag/Effect Shield with energy and damage reduction | PASS | Native duration tag/effect; clean Combat first hit raw 34/applied 17, later 34 |
 | PACT-20.04 | ASC/AttributeSet/Ability/Effect/Tags/Cue boundary/Prediction Key/Spec lifecycle | PASS | GAS Automation 1/1 + clean multi-process evidence; ASC on PlayerState Mixed, native effects/tags/specs, impact multicast boundary |
-| PACT-30.01 | Client cannot set Health or Score | NOT RUN | — |
-| PACT-30.02 | Client cannot forge damage or exceed attack rate | NOT RUN | — |
-| PACT-30.03 | Energy/dead/target/respawn/RPC validation fails closed | NOT RUN | — |
-| PACT-30.04 | Rejection is structured, non-mutating, non-crashing and convergent | NOT RUN | — |
+| PACT-30.01 | Client cannot set Health or Score | PASS | Clean AuthorityAbuse: `ForbiddenStateWrite`; post-probe Health/Energy 100, Score/Deaths 0 |
+| PACT-30.02 | Client cannot forge damage or exceed attack rate | PASS | Clean AuthorityAbuse `ForgedDamage`; AttackFlood 1 accepted + 3 `RateLimited` |
+| PACT-30.03 | Energy/dead/target/respawn/RPC validation fails closed | PASS | Clean DashRejected, DeadAbility, AuthorityAbuse and DuplicateRespawn reports at `148a1b1` |
+| PACT-30.04 | Rejection is structured, non-mutating, non-crashing and convergent | PASS | Stable reason events, unchanged snapshots, predicted correction, all owned processes exit 0/leak 0 |
 | PACT-40.01 | PowerShell discovers UE, unique port, ready/connect/action/final workflow | NOT RUN | — |
 | PACT-40.02 | JSON from server and both clients verifies full combat lifecycle | NOT RUN | — |
 | PACT-40.03 | Cleanup owns exact processes and preserves unrelated processes | NOT RUN | — |
