@@ -86,6 +86,10 @@ bool FAuthorityArenaReplicationContractTest::RunTest(const FString& Parameters)
         AAuthorityArenaPlayerController::StaticClass(),
         TEXT("ClientRequestRejected"),
         FUNC_Net | FUNC_NetClient | FUNC_NetReliable));
+    TestTrue(TEXT("Authority probe is a reliable server RPC"), HasRpcFlags(
+        AAuthorityArenaPlayerController::StaticClass(),
+        TEXT("ServerSubmitAuthorityProbe"),
+        FUNC_Net | FUNC_NetServer | FUNC_NetReliable));
     TestFalse(
         TEXT("Respawn is not pending by default"),
         GetDefault<AAuthorityArenaPlayerController>()->IsRespawnPending());

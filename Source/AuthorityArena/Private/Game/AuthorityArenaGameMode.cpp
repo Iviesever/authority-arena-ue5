@@ -150,6 +150,27 @@ void AAuthorityArenaGameMode::PostLogin(APlayerController* NewPlayer)
                 }
             }
         }
+        if (FParse::Param(FCommandLine::Get(), TEXT("AuthorityMarkDead")))
+        {
+            for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
+            {
+                AAuthorityArenaPlayerController* Controller =
+                    Cast<AAuthorityArenaPlayerController>(It->Get());
+                AAuthorityArenaPlayerState* PlayerState =
+                    IsValid(Controller) ? Controller->GetPlayerState<AAuthorityArenaPlayerState>() : nullptr;
+                if (PlayerState != nullptr && PlayerState->GetConnectionId() == TEXT("Client1"))
+                {
+                    UAuthorityArenaAbilitySystemComponent* AbilitySystem =
+                        PlayerState->GetAuthorityAbilitySystem();
+                    AbilitySystem->SetNumericAttributeBase(
+                        UAuthorityArenaAttributeSet::GetHealthAttribute(), 0.0f);
+                    AbilitySystem->AddLooseGameplayTag(AuthorityArenaTags::State_Dead);
+                    UAuthorityArenaNetworkDiagnosticsSubsystem::EmitEvent(
+                        this, TEXT("DeadGateArmed"), TEXT("player=Client1 health=0 tag=State.Dead"));
+                    break;
+                }
+            }
+        }
         ScheduleAutomationLifecycle();
     }
 }
@@ -228,12 +249,16 @@ void AAuthorityArenaGameMode::RequestRespawn(AAuthorityArenaPlayerController* Co
     {
         if (IsValid(Controller))
         {
+            UAuthorityArenaNetworkDiagnosticsSubsystem::EmitEvent(
+                this, TEXT("RespawnRejected"), TEXT("reason=NotDead"));
             Controller->ClientRequestRejected(TEXT("Respawn"), TEXT("NotDead"));
         }
         return;
     }
     if (!Controller->TryMarkRespawnPendingAuthority())
     {
+        UAuthorityArenaNetworkDiagnosticsSubsystem::EmitEvent(
+            this, TEXT("RespawnRejected"), TEXT("reason=RespawnPending"));
         Controller->ClientRequestRejected(TEXT("Respawn"), TEXT("RespawnPending"));
         return;
     }

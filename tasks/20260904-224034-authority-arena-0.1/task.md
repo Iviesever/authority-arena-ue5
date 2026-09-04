@@ -397,15 +397,15 @@ GameplayEffect/Tag 表达持续状态，固定周期消耗 Energy；能量耗尽
 - `FValidationResult ValidateDashRequest(...)`、`ValidateAttackRequest(...)`、`ValidateRespawnRequest(...)` 适配 Core `DecisionCode`，返回稳定拒绝码。
 - `HandleServerDeath(AController* InstigatorController)` 幂等；`ScheduleRespawn(AAuthorityArenaPlayerController&)` 每个 controller 最多一个 timer。
 
-- [ ] **Step 1：RED—逐项负面测试**
+- [x] **Step 1：RED—逐项负面测试**
 
 分别测试客户端 Health/Score 写入、伪造伤害、攻击过快、无 Energy Dash、错误/越距目标、死亡施法、重复 respawn、无效/非 owner RPC 引用；每项断言拒绝码、状态不变、无 crash。
 
-- [ ] **Step 2：验证 RED**
+- [x] **Step 2：验证 RED**
 
 运行 `AuthorityArena.Authority`，保存每个缺失防护的失败断言。
 
-- [ ] **Step 3：实现最小 fail-closed 校验**
+- [x] **Step 3：实现最小 fail-closed 校验**
 
 所有 RPC/ability 路径在任何 mutation 前完成 Core 判定；客户端提供的数值只可作为不可信观测且不能进入 damage/score 计算；死亡/respawn 使用幂等门闩与弱引用 timer。
 

@@ -13,6 +13,7 @@ namespace
 {
 using AuthorityArena::Core::AbilityRequest;
 using AuthorityArena::Core::AttackRequest;
+using AuthorityArena::Core::AuthorityProbeRequest;
 using AuthorityArena::Core::CompareSnapshots;
 using AuthorityArena::Core::DecisionCode;
 using AuthorityArena::Core::FinalSnapshot;
@@ -22,6 +23,7 @@ using AuthorityArena::Core::PlayerSnapshot;
 using AuthorityArena::Core::RespawnRequest;
 using AuthorityArena::Core::ValidateAbilityRequest;
 using AuthorityArena::Core::ValidateAttackRequest;
+using AuthorityArena::Core::ValidateAuthorityProbe;
 using AuthorityArena::Core::ValidateRespawnRequest;
 
 int FailureCount = 0;
@@ -67,6 +69,30 @@ AttackRequest ValidAttackRequest()
         .minimum_interval_seconds = 0.5,
         .squared_distance = 400.0,
         .maximum_squared_distance = 900.0,
+    };
+}
+
+AuthorityProbeRequest ValidAuthorityProbe()
+{
+    return AuthorityProbeRequest{
+        .has_authority = true,
+        .is_owner = true,
+        .is_alive = true,
+        .target_valid = true,
+        .target_alive = true,
+        .now_seconds = 10.0,
+        .last_request_seconds = 9.0,
+        .minimum_interval_seconds = 0.45,
+        .squared_distance = 1'440'000.0,
+        .maximum_squared_distance = 2'250'000.0,
+        .claimed_damage = 34.0,
+        .server_damage = 34.0,
+        .claimed_health = 100.0,
+        .server_health = 100.0,
+        .claimed_score = 0,
+        .server_score = 0,
+        .sequence = 2,
+        .last_sequence = 1,
     };
 }
 
@@ -169,6 +195,52 @@ void TestRespawnValidation()
         "living player cannot request respawn");
 }
 
+void TestAuthorityProbeValidation()
+{
+    ExpectEqual(ValidateAuthorityProbe(ValidAuthorityProbe()), DecisionCode::Allowed,
+                "valid authority probe is allowed without trusting client state");
+
+    auto request = ValidAuthorityProbe();
+    request.claimed_health = 999.0;
+    ExpectEqual(ValidateAuthorityProbe(request), DecisionCode::ForbiddenStateWrite,
+                "client cannot replace authoritative health");
+
+    request = ValidAuthorityProbe();
+    request.claimed_score = 99;
+    ExpectEqual(ValidateAuthorityProbe(request), DecisionCode::ForbiddenStateWrite,
+                "client cannot replace authoritative score");
+
+    request = ValidAuthorityProbe();
+    request.claimed_damage = 999.0;
+    ExpectEqual(ValidateAuthorityProbe(request), DecisionCode::ForgedDamage,
+                "client cannot choose final damage");
+
+    request = ValidAuthorityProbe();
+    request.sequence = request.last_sequence;
+    ExpectEqual(ValidateAuthorityProbe(request), DecisionCode::DuplicateSequence,
+                "duplicate request sequence is rejected");
+
+    request = ValidAuthorityProbe();
+    request.target_valid = false;
+    ExpectEqual(ValidateAuthorityProbe(request), DecisionCode::InvalidTarget,
+                "null or wrong target is rejected");
+
+    request = ValidAuthorityProbe();
+    request.target_alive = false;
+    ExpectEqual(ValidateAuthorityProbe(request), DecisionCode::InvalidTarget,
+                "dead target is rejected");
+
+    request = ValidAuthorityProbe();
+    request.squared_distance = request.maximum_squared_distance + 1.0;
+    ExpectEqual(ValidateAuthorityProbe(request), DecisionCode::TargetOutOfRange,
+                "unreachable target is rejected");
+
+    request = ValidAuthorityProbe();
+    request.last_request_seconds = 9.8;
+    ExpectEqual(ValidateAuthorityProbe(request), DecisionCode::RateLimited,
+                "too-fast attack request is rejected");
+}
+
 void TestNetworkScenarios()
 {
     const auto baseline = ParseScenarioName("baseline");
@@ -230,6 +302,7 @@ int main()
     TestAbilityValidation();
     TestAttackValidation();
     TestRespawnValidation();
+    TestAuthorityProbeValidation();
     TestNetworkScenarios();
     TestSnapshotConsistency();
 

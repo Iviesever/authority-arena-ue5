@@ -32,6 +32,7 @@ private:
     bool bAutoMove = false;
     bool bCombat = false;
     bool bDashOnly = false;
+    bool bAttackOnly = false;
     bool bMoveStarted = false;
     bool bMoveCompleted = false;
     bool bRoleSnapshotEmitted = false;

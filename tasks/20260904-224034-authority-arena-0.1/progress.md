@@ -213,3 +213,21 @@ Result: exit `1` at missing `CoreMinimal.h`. MQB does not reconstruct `.uproject
 - DashRejected: run `a9af7e12e07a4aa0b18e61cb44b18fe2`, port 61060, source `7676892`, dirty=false. Client predicted; server Energy 0 and `Failure.Resource`; final server/client x=-600 and Energy=0; all owned PIDs exit 0.
 - Sanitized evidence: `docs/examples/pact20-combat-report.json`, `docs/examples/pact20-dash-rejection-report.json`.
 - PACT-20 complete. PACT-30 fail-closed abuse paths are next.
+
+## 2026-09-05 00:55 UTC+8 — PACT-30 Core/RPC RED/GREEN
+
+- MQB RED: new `AuthorityProbeRequest` tests failed because the request type, decisions and validator did not exist.
+- MQB GREEN: 41 assertions pass, covering forbidden Health/Score writes, forged damage, duplicate sequence, invalid/dead/out-of-range targets and rate limiting.
+- UE reflection RED: Network Automation failed exactly one assertion because `ServerSubmitAuthorityProbe` was absent.
+- Implemented a reliable owning-PlayerController RPC that reconstructs server truth, delegates to Core, emits structured reasons, sends a Client rejection notification, and never mutates gameplay state.
+- First build rejected local names shadowing Controller members under V7 warnings-as-errors; renaming them to `ArenaCharacter`/`ArenaPlayerState` restored a clean build.
+- Network Automation returned to 1/1 success.
+
+## 2026-09-05 01:07 UTC+8 — PACT-30 exploratory negative matrix
+
+- `AuthorityAbuse` run `37a26bbf1ec14bed951109d28aeff7f0`: `ForbiddenStateWrite`, `ForgedDamage`, `InvalidTarget`, `TargetOutOfRange`; Health/Energy 100 and Score/Deaths 0 remained unchanged.
+- `AttackFlood` run `7e11d9eb1be34295be77a9750c6f7ea8`: exactly one legal probe accepted and three `RateLimited`; state unchanged.
+- Added duplicate sequence to AuthorityAbuse; Core already proves the rule.
+- `DeadAbility` run `0bc19c7207954ed6b5667cd6fd33bec5`: actual server Health 0 + `State.Dead`, normal GAS attack rejected, no Projectile.
+- `DuplicateRespawn` first exposed an irrelevant movement assertion after stable respawn at x=600. Logs already proved two requests, `RespawnPending`, and one replacement. Removing movement from this lifecycle-only scenario produced passing run `ca0152d66899444e98520b0d8a2b7fcc`.
+- All were dirty development evidence; clean-commit full negative matrix remains mandatory.

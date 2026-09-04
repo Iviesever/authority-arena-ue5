@@ -98,6 +98,60 @@ DecisionCode ValidateRespawnRequest(const RespawnRequest& request) noexcept
     return DecisionCode::Allowed;
 }
 
+DecisionCode ValidateAuthorityProbe(const AuthorityProbeRequest& request) noexcept
+{
+    if (!request.has_authority)
+    {
+        return DecisionCode::NotAuthority;
+    }
+    if (!request.is_owner)
+    {
+        return DecisionCode::NotOwner;
+    }
+    if (!request.is_alive)
+    {
+        return DecisionCode::Dead;
+    }
+    if (!IsFiniteAndNonNegative(request.now_seconds) ||
+        !IsFiniteAndNonNegative(request.last_request_seconds) ||
+        !IsFiniteAndNonNegative(request.minimum_interval_seconds) ||
+        !IsFiniteAndNonNegative(request.squared_distance) ||
+        !IsFiniteAndNonNegative(request.maximum_squared_distance) ||
+        !IsFiniteAndNonNegative(request.claimed_damage) ||
+        !IsFiniteAndNonNegative(request.server_damage) ||
+        !IsFiniteAndNonNegative(request.claimed_health) ||
+        !IsFiniteAndNonNegative(request.server_health))
+    {
+        return DecisionCode::InvalidNumeric;
+    }
+    if (request.sequence <= request.last_sequence)
+    {
+        return DecisionCode::DuplicateSequence;
+    }
+    if (std::abs(request.claimed_health - request.server_health) > 0.001 ||
+        request.claimed_score != request.server_score)
+    {
+        return DecisionCode::ForbiddenStateWrite;
+    }
+    if (std::abs(request.claimed_damage - request.server_damage) > 0.001)
+    {
+        return DecisionCode::ForgedDamage;
+    }
+    if (!request.target_valid || !request.target_alive)
+    {
+        return DecisionCode::InvalidTarget;
+    }
+    if (request.squared_distance > request.maximum_squared_distance)
+    {
+        return DecisionCode::TargetOutOfRange;
+    }
+    if (request.now_seconds - request.last_request_seconds < request.minimum_interval_seconds)
+    {
+        return DecisionCode::RateLimited;
+    }
+    return DecisionCode::Allowed;
+}
+
 const char* ToString(const DecisionCode code) noexcept
 {
     switch (code)
@@ -115,6 +169,9 @@ const char* ToString(const DecisionCode code) noexcept
     case DecisionCode::TargetOutOfRange: return "TargetOutOfRange";
     case DecisionCode::RespawnPending: return "RespawnPending";
     case DecisionCode::InvalidNumeric: return "InvalidNumeric";
+    case DecisionCode::ForbiddenStateWrite: return "ForbiddenStateWrite";
+    case DecisionCode::ForgedDamage: return "ForgedDamage";
+    case DecisionCode::DuplicateSequence: return "DuplicateSequence";
     }
     return "InvalidNumeric";
 }

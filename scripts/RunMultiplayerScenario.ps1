@@ -1,6 +1,6 @@
 [CmdletBinding()]
 param(
-    [ValidateSet('ConnectionMovement', 'Lifecycle', 'Combat', 'DashRejected')]
+    [ValidateSet('ConnectionMovement', 'Lifecycle', 'Combat', 'DashRejected', 'AuthorityAbuse', 'AttackFlood', 'DeadAbility', 'DuplicateRespawn')]
     [string] $Scenario = 'ConnectionMovement',
 
     [ValidateRange(20, 180)]
@@ -168,11 +168,14 @@ try {
 
     $serverScenarioArguments = @()
     $serverExitAfter = if ($Scenario -eq 'Combat') { 32 } else { 20 }
-    if ($Scenario -eq 'Lifecycle') {
+    if ($Scenario -eq 'Lifecycle' -or $Scenario -eq 'DuplicateRespawn') {
         $serverScenarioArguments += '-AuthorityLifecycle'
     }
     if ($Scenario -eq 'DashRejected') {
         $serverScenarioArguments += '-AuthorityRejectDash'
+    }
+    if ($Scenario -eq 'DeadAbility') {
+        $serverScenarioArguments += '-AuthorityMarkDead'
     }
 
     $server = Start-OwnedProcess -Role 'Server' -Executable $ue.EditorCmd -Arguments (@(
@@ -197,8 +200,18 @@ try {
     if ($Scenario -eq 'DashRejected') {
         $clientScenarioArguments += '-AuthorityDashOnly'
     }
+    if ($Scenario -eq 'AuthorityAbuse') {
+        $clientScenarioArguments += '-AuthorityAbuse'
+    }
+    if ($Scenario -eq 'AttackFlood') {
+        $clientScenarioArguments += '-AuthorityFlood'
+    }
+    if ($Scenario -eq 'DeadAbility') {
+        $clientScenarioArguments += '-AuthorityAttackOnly'
+    }
     $clientMovementArguments = @()
-    if ($Scenario -eq 'ConnectionMovement' -or $Scenario -eq 'Lifecycle') {
+    if ($Scenario -eq 'ConnectionMovement' -or $Scenario -eq 'Lifecycle' -or
+        $Scenario -eq 'AttackFlood') {
         $clientMovementArguments += '-AuthorityAutoMove'
         $clientMovementArguments += '-AuthorityMoveDuration=2'
     }
@@ -212,8 +225,11 @@ try {
     $ownedProcesses.Add($client1)
 
     $client2ScenarioArguments = @()
-    if ($Scenario -eq 'Lifecycle') {
+    if ($Scenario -eq 'Lifecycle' -or $Scenario -eq 'DuplicateRespawn') {
         $client2ScenarioArguments += '-AuthorityRequestRespawnAfter=4'
+    }
+    if ($Scenario -eq 'DuplicateRespawn') {
+        $client2ScenarioArguments += '-AuthorityDuplicateRespawn'
     }
     $client2 = Start-OwnedProcess -Role 'Client2' -Executable $ue.EditorCmd -Arguments (@(
         $projectPath,
@@ -228,7 +244,8 @@ try {
         'local_role=AutonomousProxy',
         'local_role=SimulatedProxy'
     )
-    if ($Scenario -eq 'ConnectionMovement' -or $Scenario -eq 'Lifecycle') {
+    if ($Scenario -eq 'ConnectionMovement' -or $Scenario -eq 'Lifecycle' -or
+        $Scenario -eq 'AttackFlood') {
         $clientReadyMarkers += 'AA_EVENT event=AutoMoveComplete'
     }
     Wait-LogMarkers -OwnedProcess $client1 -LogPath $client1Log -Markers $clientReadyMarkers -Deadline $deadline
@@ -257,7 +274,8 @@ try {
     Require-Text $serverText 'role=Authority' 'server observed authority roles'
     Require-Text $serverText 'event=PlayerDisconnected context=AuthorityArenaGameMode_0 player=Client1' 'Client1 disconnected cleanly'
     Require-Text $serverText 'event=PlayerDisconnected context=AuthorityArenaGameMode_0 player=Client2' 'Client2 disconnected cleanly'
-    if ($Scenario -eq 'ConnectionMovement' -or $Scenario -eq 'Lifecycle') {
+    if ($Scenario -eq 'ConnectionMovement' -or $Scenario -eq 'Lifecycle' -or
+        $Scenario -eq 'AttackFlood') {
         Require-Text $client1Text 'event=AutoMoveComplete' 'Client1 completed movement input'
         Require-Text $client2Text 'event=AutoMoveComplete' 'Client2 completed movement input'
     }
@@ -270,7 +288,7 @@ try {
         pawnRespawned = $false
         disconnectedCleanly = $true
     }
-    if ($Scenario -eq 'Lifecycle') {
+    if ($Scenario -eq 'Lifecycle' -or $Scenario -eq 'DuplicateRespawn') {
         Require-Text $serverText 'event=PawnDestroyed context=AuthorityArenaGameMode_0 player=Client2' 'Client2 pawn destroyed by authority'
         Require-Text $serverText 'event=PawnRespawned context=AuthorityArenaGameMode_0 player=Client2' 'Client2 pawn respawned by authority'
         $destroyCount = ([regex]::Matches($serverText, 'event=PawnDestroyed .*player=Client2')).Count
@@ -280,6 +298,12 @@ try {
         }
         $lifecycleAssertions.pawnDestroyed = $true
         $lifecycleAssertions.pawnRespawned = $true
+    }
+    $duplicateRespawnRejected = $false
+    if ($Scenario -eq 'DuplicateRespawn') {
+        Require-Text $client2Text 'event=RespawnRequestedDuplicate' 'Client2 sent a duplicate respawn request'
+        Require-Text $serverText 'event=RespawnRejected context=AuthorityArenaGameMode_0 reason=RespawnPending' 'server rejected duplicate respawn while pending'
+        $duplicateRespawnRejected = $true
     }
     $combatAssertions = [ordered]@{
         dashPredicted = $false
@@ -338,6 +362,64 @@ try {
         $rejectionAssertions.serverRejected = $true
         $rejectionAssertions.clientCorrected = $true
     }
+    $authorityAssertions = [ordered]@{
+        forbiddenStateWrite = $false
+        forgedDamage = $false
+        invalidTarget = $false
+        targetOutOfRange = $false
+        attackRateLimited = $false
+        authoritativeStateUnchanged = $false
+    }
+    if ($Scenario -eq 'AuthorityAbuse') {
+        foreach ($reason in @('ForbiddenStateWrite', 'ForgedDamage', 'InvalidTarget', 'TargetOutOfRange', 'DuplicateSequence')) {
+            Require-Text $serverText "event=AuthorityProbeRejected" "server emitted rejection for $reason"
+            Require-Text $serverText "reason=$reason" "server rejected $reason"
+        }
+        if ($serverText -notmatch 'event=AuthorityPosition.*player=Client1 .*health=100\.00 energy=100\.00 score=0 deaths=0') {
+            throw 'AuthorityAbuse changed Client1 authoritative Health, Energy, Score, or Deaths.'
+        }
+        $authorityAssertions.forbiddenStateWrite = $true
+        $authorityAssertions.forgedDamage = $true
+        $authorityAssertions.invalidTarget = $true
+        $authorityAssertions.targetOutOfRange = $true
+        $authorityAssertions.authoritativeStateUnchanged = $true
+    }
+    $deadAbilityAssertions = [ordered]@{
+        deadStateReplicated = $false
+        abilityRejected = $false
+        projectileNotSpawned = $false
+        authoritativeStateUnchanged = $false
+    }
+    if ($Scenario -eq 'DeadAbility') {
+        Require-Text $serverText 'event=DeadGateArmed context=AuthorityArenaGameMode_0 player=Client1 health=0 tag=State.Dead' 'server established actual dead state'
+        $combinedAbilityLog = "$serverText`n$client1Text"
+        Require-Text $combinedAbilityLog 'event=AbilityRejected' 'dead-state attack was rejected'
+        Require-Text $combinedAbilityLog 'State.Dead' 'dead-state rejection identified the blocking tag'
+        if ($serverText.Contains('event=ProjectileSpawned', [StringComparison]::Ordinal)) {
+            throw 'DeadAbility spawned a projectile despite State.Dead.'
+        }
+        if ($serverText -notmatch 'event=AuthorityPosition.*player=Client1 .*health=0\.00 .*score=0 deaths=0 .*dead=true') {
+            throw 'DeadAbility did not preserve the expected authoritative dead state.'
+        }
+        $deadAbilityAssertions.deadStateReplicated = $true
+        $deadAbilityAssertions.abilityRejected = $true
+        $deadAbilityAssertions.projectileNotSpawned = $true
+        $deadAbilityAssertions.authoritativeStateUnchanged = $true
+    }
+    if ($Scenario -eq 'AttackFlood') {
+        Require-Text $serverText 'event=AuthorityProbeAccepted' 'server accepted the first legal attack probe'
+        Require-Text $serverText 'reason=RateLimited' 'server rejected a too-fast follow-up attack probe'
+        $acceptedCount = ([regex]::Matches($serverText, 'event=AuthorityProbeAccepted')).Count
+        $rateLimitedCount = ([regex]::Matches($serverText, 'event=AuthorityProbeRejected .*reason=RateLimited')).Count
+        if ($acceptedCount -ne 1 -or $rateLimitedCount -lt 1) {
+            throw "Unexpected flood decisions: accepted=$acceptedCount rateLimited=$rateLimitedCount"
+        }
+        if ($serverText -notmatch 'event=AuthorityPosition.*player=Client1 .*health=100\.00 energy=100\.00 score=0 deaths=0') {
+            throw 'AttackFlood changed Client1 authoritative Health, Energy, Score, or Deaths.'
+        }
+        $authorityAssertions.attackRateLimited = $true
+        $authorityAssertions.authoritativeStateUnchanged = $true
+    }
 
     $client1Position = [regex]::Match($serverText, 'event=AuthorityPosition.*player=Client1 x=(-?\d+(?:\.\d+)?)')
     $client2Position = [regex]::Match($serverText, 'event=AuthorityPosition.*player=Client2 x=(-?\d+(?:\.\d+)?)')
@@ -346,10 +428,13 @@ try {
     }
     $client1X = [double]::Parse($client1Position.Groups[1].Value, [Globalization.CultureInfo]::InvariantCulture)
     $client2X = [double]::Parse($client2Position.Groups[1].Value, [Globalization.CultureInfo]::InvariantCulture)
-    if ($Scenario -ne 'DashRejected' -and [Math]::Abs($client1X - (-600.0)) -lt 100.0) {
+    if (($Scenario -eq 'ConnectionMovement' -or $Scenario -eq 'Lifecycle' -or
+         $Scenario -eq 'Combat' -or $Scenario -eq 'AttackFlood') -and
+        [Math]::Abs($client1X - (-600.0)) -lt 100.0) {
         throw "Client1 authoritative movement was too small: x=$client1X"
     }
-    if (($Scenario -eq 'ConnectionMovement' -or $Scenario -eq 'Lifecycle') -and
+    if (($Scenario -eq 'ConnectionMovement' -or $Scenario -eq 'Lifecycle' -or
+         $Scenario -eq 'AttackFlood') -and
         [Math]::Abs($client2X - 600.0) -lt 100.0) {
         throw "Client2 authoritative movement was too small: x=$client2X"
     }
@@ -373,10 +458,14 @@ try {
             authorityObserved = $true
             client1AuthorityX = $client1X
             client2AuthorityX = $client2X
-            movementOccurred = $Scenario -ne 'DashRejected'
+            movementOccurred = $Scenario -eq 'ConnectionMovement' -or $Scenario -eq 'Lifecycle' -or
+                $Scenario -eq 'Combat' -or $Scenario -eq 'AttackFlood'
             lifecycle = $lifecycleAssertions
+            duplicateRespawnRejected = $duplicateRespawnRejected
             combat = $combatAssertions
             rejection = $rejectionAssertions
+            authority = $authorityAssertions
+            deadAbility = $deadAbilityAssertions
         }
         processes = @(
             [ordered]@{ role = $server.Role; pid = $server.Id; executable = $server.Executable; exitCode = $server.Process.ExitCode },

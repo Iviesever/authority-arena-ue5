@@ -2,7 +2,7 @@
 
 ## Current state
 
-- Active phase: PACT-00/10/20 complete; PACT-30 authority and negative paths begin next.
+- Active phase: PACT-00/10/20 complete; PACT-30 implementation and dirty negative matrix pass. Clean-commit evidence remains.
 - Release eligibility: not eligible; no project build or P0 runtime verification has passed.
 - Remote repository: public `https://github.com/Iviesever/authority-arena-ue5`; `main` contains governance commit `acacf93d37dd246161b8b397c499b93acc031a68`.
 - Local repository: current branch `feat/authority-arena-0.1` tracks its same-name origin branch; it was created from `origin/main` at `e35df954166ff558b824ce41386c26a68f684d24`.
@@ -18,7 +18,7 @@
 
 ## Next exact action
 
-Write failing PACT-30 validation tests for forged values, attack flood, invalid target, dead-state ability, duplicate respawn, and malformed RPC references before implementing the abuse scenarios.
+Commit/push PACT-30, then run clean Core + Network/GAS Automation + DashRejected/AuthorityAbuse/AttackFlood/DeadAbility/DuplicateRespawn before closing PACT-30.
 
 ## Safety boundary
 

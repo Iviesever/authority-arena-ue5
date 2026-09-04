@@ -38,6 +38,7 @@ void UAuthorityArenaAutomationDriver::BeginPlay()
     bAutoMove = FParse::Param(FCommandLine::Get(), TEXT("AuthorityAutoMove"));
     bCombat = FParse::Param(FCommandLine::Get(), TEXT("AuthorityCombat"));
     bDashOnly = FParse::Param(FCommandLine::Get(), TEXT("AuthorityDashOnly"));
+    bAttackOnly = FParse::Param(FCommandLine::Get(), TEXT("AuthorityAttackOnly"));
     FParse::Value(FCommandLine::Get(), TEXT("AuthorityMoveDuration="), MoveDurationSeconds);
     FParse::Value(FCommandLine::Get(), TEXT("AuthorityExitAfter="), ExitAfterSeconds);
     MoveDurationSeconds = FMath::Clamp(MoveDurationSeconds, 0.25f, 10.0f);
@@ -65,7 +66,7 @@ void UAuthorityArenaAutomationDriver::TickComponent(
 
 void UAuthorityArenaAutomationDriver::TickCombat()
 {
-    if (!bCombat && !bDashOnly)
+    if (!bCombat && !bDashOnly && !bAttackOnly)
     {
         return;
     }
@@ -114,14 +115,21 @@ void UAuthorityArenaAutomationDriver::TickCombat()
 
     if (PlayerId == TEXT("Client1"))
     {
-        RequestOnce(bDashRequested, 0.35, AuthorityArenaTags::Ability_Dash, TEXT("Dash"));
-        if (bCombat)
+        if (bAttackOnly)
         {
-            RequestOnce(bSecondDashRequested, 0.55, AuthorityArenaTags::Ability_Dash, TEXT("DashRepeat"));
-            RequestOnce(bAttackOneRequested, 0.90, AuthorityArenaTags::Ability_Attack, TEXT("Attack1"));
-            RequestOnce(bAttackTwoRequested, 2.40, AuthorityArenaTags::Ability_Attack, TEXT("Attack2"));
-            RequestOnce(bAttackThreeRequested, 3.00, AuthorityArenaTags::Ability_Attack, TEXT("Attack3"));
-            RequestOnce(bAttackFourRequested, 3.60, AuthorityArenaTags::Ability_Attack, TEXT("Attack4"));
+            RequestOnce(bAttackOneRequested, 0.35, AuthorityArenaTags::Ability_Attack, TEXT("AttackWhileDead"));
+        }
+        else
+        {
+            RequestOnce(bDashRequested, 0.35, AuthorityArenaTags::Ability_Dash, TEXT("Dash"));
+            if (bCombat)
+            {
+                RequestOnce(bSecondDashRequested, 0.55, AuthorityArenaTags::Ability_Dash, TEXT("DashRepeat"));
+                RequestOnce(bAttackOneRequested, 0.90, AuthorityArenaTags::Ability_Attack, TEXT("Attack1"));
+                RequestOnce(bAttackTwoRequested, 2.40, AuthorityArenaTags::Ability_Attack, TEXT("Attack2"));
+                RequestOnce(bAttackThreeRequested, 3.00, AuthorityArenaTags::Ability_Attack, TEXT("Attack3"));
+                RequestOnce(bAttackFourRequested, 3.60, AuthorityArenaTags::Ability_Attack, TEXT("Attack4"));
+            }
         }
     }
     else if (PlayerId == TEXT("Client2") && bCombat)

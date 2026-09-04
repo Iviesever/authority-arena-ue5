@@ -25,13 +25,35 @@ public:
     UFUNCTION(Server, Unreliable)
     void ServerReportViewSample(FRotator ViewRotation, uint32 Sequence);
 
+    UFUNCTION(Server, Reliable)
+    void ServerSubmitAuthorityProbe(
+        AActor* ClaimedTarget,
+        float ClaimedDamage,
+        float ClaimedHealth,
+        int32 ClaimedScore,
+        uint32 Sequence);
+
     UFUNCTION(Client, Reliable)
     void ClientRequestRejected(FName Action, FName Reason);
 
 private:
+    void TickRespawnAutomation();
+    void TickAuthorityProbeAutomation();
+
     uint32 LastAcceptedViewSequence = 0;
+    uint32 LastAuthorityProbeSequence = 0;
+    double LastAuthorityProbeSeconds = 0.0;
     double AutomationStartSeconds = 0.0;
     float AutomationRespawnRequestSeconds = 0.0f;
     bool bAutomationRespawnRequested = false;
+    bool bAutomationSecondRespawnRequested = false;
+    bool bDuplicateRespawnAutomation = false;
+    bool bAuthorityAbuse = false;
+    bool bAuthorityFlood = false;
+    bool bProbeOneSent = false;
+    bool bProbeTwoSent = false;
+    bool bProbeThreeSent = false;
+    bool bProbeFourSent = false;
+    bool bProbeFiveSent = false;
     bool bRespawnPending = false;
 };
