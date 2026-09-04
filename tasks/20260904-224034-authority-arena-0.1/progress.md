@@ -323,3 +323,14 @@ Result: exit `1` at missing `CoreMinimal.h`. MQB does not reconstruct `.uproject
 - Authored English/Chinese READMEs, Testing, Known Limitations, AI Assistance, Code Walkthrough, Interview Guide, three independent Live Change Drills, Rollback comparison, Release Notes, and source-contract CI.
 - GREEN: documentation verifier passed 17 required files, eight README first-page answers, five exact AI disclosure statements, all interview topics, three drills, rollback dimensions, and the no-custom-assets policy.
 - Added `Verify-CleanSource.ps1`; structure verifier first failed on its absence, then passed after the bounded unique-clone implementation. Clean-source execution remains the next gate.
+
+## 2026-09-05 03:26 UTC+8 — PACT-60 final clean-source delivery
+
+- First full clone of `be8b189` passed all build/runtime/package gates but revealed the checked-out goal byte hash changed from `A556…C799` to `B61…` under CRLF conversion.
+- The first `.gitattributes` attempt fixed general files to LF but converted the mixed-line-ending goal blob to `3D9…`; a hard expected-hash gate prevented acceptance. `-text !eol` plus forced index renormalization restored the verbatim 19,612-byte contract blob. A lightweight clone then reproduced `A556E8B1DB446034AB8ABD873293205155EB1DDFEBC3E6CE326AC0380DB5C799`.
+- Final clean source: detached `568b57e5f99dc28d4f70f64a5fee3829cd08e4db` under `Artifacts/clean-checkout/568b57e5-20260905-031936`; no copied Binaries/Intermediate/Saved/Artifacts and Git remained clean.
+- Fresh MQB: four compile misses + one link miss, then 41 assertions pass. Fresh UBT: Editor Development, Game Development and Game Shipping all succeeded. UE Automation passed 3/3.
+- Editor Combat run `bbaa430861344e6ca7d0e0a9548ba959` passed with three exit-0 processes.
+- Clean Shipping package: all stages true; 679,588,078 total bytes; game EXE SHA-256 `43D463E0494DFD66A600532BFE40DF3D2805472D09B6BE08CB7C039D341B7C33`; payload fingerprint `0EC9AB311007BB018E99115DF3DFA1438115B85773D3982E5DF845F431604BEF`; headless packaged run `f5254a4164fd4b9192ace5882e2c0620` passed.
+- Clean Development package: all stages true; 1,037,313,879 total bytes; game EXE SHA-256 `D2C4CCF947CACD342D190809E14EEB65893CB853CBC2669FEE399EA0EBDAE790`; payload fingerprint `968E8C11FEE1DE183B8D133F00EBB8A688AE0F13F90D62514E4D9FBF093184E0`; packaged Combat run `5472e7fbbbf64bef9e454675b419f982` passed.
+- `clean-source-report.json` records dirty=false and owned process survivors 0. PACT-60 complete; final current-SHA matrix and independent audit remain before release.

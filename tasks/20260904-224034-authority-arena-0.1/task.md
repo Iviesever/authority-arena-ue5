@@ -554,11 +554,11 @@ Core MQB tests、ProjectStructure、UE `AuthorityArena.*` Automation、headless�
 
 使用 `Get-FileHash -Algorithm SHA256` 计算主 exe/Pak/manifest；记录总大小、本地路径、源 SHA。所有产物仍位于 ignored `Artifacts/`。
 
-- [ ] **Step 6：clean-source 重验**
+- [x] **Step 6：clean-source 重验**
 
 在 `Artifacts/clean-checkout/<sha>` 创建临时 clone（目标路径先验证在 Artifacts 下），checkout 精确 feature SHA，不复制 Binaries/Intermediate/Saved；重新运行 MQB、UBT、Automation、BuildCookRun 与 packaged baseline。不得用当前脏工作区结果代替。
 
-- [ ] **Step 7：提交文档证据**
+- [x] **Step 7：提交文档证据**
 
 更新矩阵与 `TESTING.md`，只提交小型去敏摘要，不提交本地包；提交 `test: verify clean packaged Win64 delivery` 并 push。
 

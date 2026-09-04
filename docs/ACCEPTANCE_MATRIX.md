@@ -47,17 +47,17 @@ Statuses are `NOT RUN`, `RED`, `PASS`, `FAIL`, or `N/A` with a reason. `PASS` re
 | PACT-50.03 | Real two-client screenshot from current SHA | PASS | 1680×560 PNG, 635,976 bytes, SHA-256 `374FDBF5DE651D8E670990C64627B67E5588051AC84C0290B7CE4ABCD962DA28` |
 | PACT-50.04 | Architecture, replication and GAS diagrams | PASS | `docs/images/architecture.png`, `replication-flow.png`, `gas-flow.png`; visually inspected |
 | PACT-50.05 | Structured network report; optional trace remains ignored | PASS | `docs/examples/network-matrix.json`; per-process JSONL retained in ignored Artifacts; no trace claimed |
-| PACT-60.01 | Core, Attribute/Effect, Ability, RepNotify, validation, lifecycle, config tests | NOT RUN | — |
-| PACT-60.02 | Negative, repeated, timeout and process-cleanup tests | NOT RUN | — |
-| PACT-60.03 | UE Automation, headless and interactive verification | NOT RUN | — |
-| PACT-60.04 | BuildCookRun/Cook/Stage/Pak/conditional IoStore/Archive | NOT RUN | — |
-| PACT-60.05 | Packaged executable and packaged two-client scenario | NOT RUN | — |
-| PACT-60.06 | Clean-source full rebuild and verification | NOT RUN | — |
-| PACT-60.07 | Artifact SHA-256 and source SHA binding | NOT RUN | — |
-| PACT-70.01 | README and optionality-resolved README_ZH | NOT RUN | — |
-| PACT-70.02 | All required architecture/network/GAS/authority/test/build docs | NOT RUN | — |
-| PACT-70.03 | AI disclosure, walkthrough, interview guide and three live drills | NOT RUN | — |
-| PACT-70.04 | Rollback versus UE replication comparison | NOT RUN | — |
+| PACT-60.01 | Core, Attribute/Effect, Ability, RepNotify, validation, lifecycle, config tests | PASS | Clean `568b57e`: MQB 41 assertions; UE Automation 3/3; contract/structure/document verifiers pass |
+| PACT-60.02 | Negative, repeated, timeout and process-cleanup tests | PASS | PACT-40 clean 9-scenario failure matrix, 3 repeated baselines, watchdog expected exit 1/leak 0; runner contract rerun before clean gate |
+| PACT-60.03 | UE Automation, headless and interactive verification | PASS | Clean Automation 3/3 and Shipping headless run `f5254a4`; packaged D3D11 interactive run `1f8fa32` exit 0 |
+| PACT-60.04 | BuildCookRun/Cook/Stage/Pak/conditional IoStore/Archive | PASS | Clean `568b57e` Shipping + Development manifests; both record all six stages true and Pak/UTOC/UCAS present |
+| PACT-60.05 | Packaged executable and packaged two-client scenario | PASS | Shipping structured smoke `f5254a4`; Development packaged Combat `5472e7f`, three distinct processes and full lifecycle |
+| PACT-60.06 | Clean-source full rebuild and verification | PASS | `Artifacts/clean-checkout/568b57e5-20260905-031936/Artifacts/clean-source-report.json`; exact detached SHA, dirty=false, owned survivors 0 |
+| PACT-60.07 | Artifact SHA-256 and source SHA binding | PASS | Source `568b57e5f99dc28d4f70f64a5fee3829cd08e4db`; Shipping fingerprint `0EC9AB…BEF`, Development `968E8C…4E0`; per-file hashes revalidated |
+| PACT-70.01 | README and optionality-resolved README_ZH | PASS | Clean documentation verifier at `568b57e`; English first-page 8/8 and Chinese README present |
+| PACT-70.02 | All required architecture/network/GAS/authority/test/build docs | PASS | Clean documentation verifier: 17 required portfolio/source-contract files |
+| PACT-70.03 | AI disclosure, walkthrough, interview guide and three live drills | PASS | Five exact disclosure statements, 15 interview topics and all three independent drills validated |
+| PACT-70.04 | Rollback versus UE replication comparison | PASS | Comparison covers goal, ownership, prediction, correction, bandwidth, determinism and use case; no rollback claim |
 | PACT-70.05 | Independent audit has no Blocker/High | NOT RUN | — |
 | PACT-70.06 | PR ready and merged with normal merge commit | NOT RUN | — |
 | PACT-70.07 | Annotated `v0.1.0` tag | NOT RUN | — |
