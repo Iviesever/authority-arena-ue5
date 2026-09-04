@@ -9,4 +9,4 @@
 *.uproject text eol=lf
 *.yml text eol=lf
 *.png binary
-tasks/20260904-224034-authority-arena-0.1/goal-objective.md -text
+tasks/20260904-224034-authority-arena-0.1/goal-objective.md -text !eol
