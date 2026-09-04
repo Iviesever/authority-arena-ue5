@@ -54,6 +54,8 @@ This is a reproducible validation injection, not a production anti-cheat claim a
 
 `UGA_ProjectileAttack` accepts LocalPredicted input but only the authority branch calls `UAuthorityArenaCombatComponent::SpawnProjectileAuthority`. The client never provides damage. The server uses deferred spawn to record the replicated Projectile before close-range overlap can destroy it; world-space velocity disables `bInitialVelocityInLocalSpace` to avoid double rotation.
 
+Before activation, authority scans actual Characters for a living opponent within 1000 uu and a forward dot product of at least 0.8. Missing/out-of-range/behind/dead targets add `Failure.Target`; the owning client may already have predicted, so normal GAS Prediction Key rejection corrects it. Automation tests cover the pure geometry predicate, and AuthorityAbuse proves predicted input with no projectile.
+
 Only server overlap constructs `UAuthorityArenaGE_ProjectileDamage` and applies its spec to the target ASC. A bounded unreliable `MulticastImpact` carries presentation coordinates after the hit is authoritative; Health, Death and Score use replicated attributes/state rather than multicast side effects.
 
 ## Shield / Block
@@ -73,4 +75,4 @@ t=3.00 Attack 3 -> 34 applied
 t=3.60 Attack 4 -> Health 0 -> Deaths/Score -> Pawn respawn
 ```
 
-Automation tests lock the CDO/reflection contract, native tags, cost/cooldown classes, Mixed ASC ownership, attributes, shield damage function, projectile replication, and required C++ components. Multi-process evidence verifies prediction/confirmation, server-only spawn/hit/damage, shield mitigation, death/score/respawn and rejection correction. Clean-commit report paths are recorded in the acceptance matrix after the final rerun.
+Automation tests lock the CDO/reflection contract, native tags, cost/cooldown classes, Mixed ASC ownership, attributes, shield damage function, target geometry, projectile replication, and required C++ components. Multi-process evidence verifies prediction/confirmation, native GAS Flood cooldown rejection, server-only spawn/hit/damage, shield mitigation, death/score/respawn, final cross-process state consistency and rejection correction.

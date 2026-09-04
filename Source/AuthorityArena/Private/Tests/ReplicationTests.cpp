@@ -2,6 +2,7 @@
 
 #include "Misc/AutomationTest.h"
 
+#include "Ability/AuthorityArenaAbilitySystemComponent.h"
 #include "Automation/AuthorityArenaAutomationDriver.h"
 #include "Character/AuthorityArenaCharacter.h"
 #include "Diagnostics/AuthorityArenaNetworkDiagnosticsSubsystem.h"
@@ -89,6 +90,10 @@ bool FAuthorityArenaReplicationContractTest::RunTest(const FString& Parameters)
     TestTrue(TEXT("Authority probe is a reliable server RPC"), HasRpcFlags(
         AAuthorityArenaPlayerController::StaticClass(),
         TEXT("ServerSubmitAuthorityProbe"),
+        FUNC_Net | FUNC_NetServer | FUNC_NetReliable));
+    TestTrue(TEXT("Attack flood uses the native reliable GAS activation RPC"), HasRpcFlags(
+        UAuthorityArenaAbilitySystemComponent::StaticClass(),
+        TEXT("ServerTryActivateAbility"),
         FUNC_Net | FUNC_NetServer | FUNC_NetReliable));
     TestFalse(
         TEXT("Respawn is not pending by default"),

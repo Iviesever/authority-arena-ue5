@@ -43,6 +43,8 @@ The runner parses every non-empty line, checks schema 1, exact RunId/role and st
 
 Shipping does not enable general logs in this installed shared-engine build. Packaged readiness and assertions therefore consume JSONL directly; object numeric suffixes are normalized only in the synthetic assertion text, while original JSONL stays unchanged.
 
+For Combat, authority records two `FinalAuthorityState` rows at a stable server-time checkpoint. Both clients record both replicated Pawns as `ClientFinalState` two seconds before their controlled exit. The report's `finalConsistency` contains four comparisons and rejects position delta over 5 uu, Health/Energy delta over 0.15, or any Score/Deaths/Shield/Dead mismatch.
+
 ## Network profiles
 
 UE 5.8 source confirms command-line packet simulation settings `-PktLag`, `-PktLagVariance` and `-PktLoss`. The runner applies them to all three processes and requires every log to echo each non-zero value.
@@ -65,14 +67,14 @@ Configured latency/loss and wall-clock duration are observations. The report set
 - `ServerShutdown`: server exits first; both clients must emit `NetworkFailure`, exit through the C++ handler and avoid standalone fallback.
 - `SecondClientConnectFail`: Client2 targets a separately reserved unused port; it emits `NetworkFailure`, while Client1 remains connected to the real server.
 - `DashRejected`: predicted client action, actual server Energy 0, structured resource rejection and correction.
-- `AuthorityAbuse`: forbidden state write, forged damage, invalid/out-of-range target and duplicate sequence.
-- `AttackFlood`: one accepted validation probe followed by rate-limited requests.
+- `AuthorityAbuse`: forbidden state write, forged damage, invalid/out-of-range target and duplicate sequence, plus predicted real GAS Attack rejected by authority target geometry with no projectile.
+- `AttackFlood`: four native GAS ServerTryActivateAbility requests/Prediction Keys; one AttackConfirmed/projectile/damage and three server `Cooldown.Attack` rejections, alongside one accepted Core probe and rate-limited follow-ups.
 - `DeadAbility`: Health 0 + `State.Dead`, normal GAS attack rejected, no projectile.
 - `DuplicateRespawn`: two reliable requests while one weak timer is pending; second rejected, exactly one replacement.
 - `Watchdog`: no process has an exit timer. The child runner must fail non-zero at the deadline; `Test-Watchdog.ps1` then proves all three logs remain and no process carrying the RunId exists.
 
 ## Report verification
 
-`Verify-ScenarioReport.ps1` checks schema/result, RunId/source SHA, optional clean-worktree requirement, exactly three exit-0 process records and all three non-empty JSONL summaries. Expected-fault reports use `PASS_EXPECTED_FAULT`; watchdog is separately `PASS_EXPECTED_FAILURE` because the runner itself must return non-zero.
+`Verify-ScenarioReport.ps1` checks schema/result, RunId/source SHA, optional clean-worktree requirement, exactly three exit-0 process records and all three non-empty JSONL summaries. Expected-fault reports use `PASS_EXPECTED_FAULT`; watchdog is separately `PASS_EXPECTED_FAILURE` because the runner itself must return non-zero. Its report includes source SHA, dirty flag, verification UTC, three role/PID identities and leak count.
 
 Full logs and traces remain under ignored `Artifacts/`. Only small, path/PID-redacted evidence examples are committed.

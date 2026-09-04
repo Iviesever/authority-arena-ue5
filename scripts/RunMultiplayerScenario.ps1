@@ -224,6 +224,83 @@ function Get-StructuredEventText {
     ) -join "`n")
 }
 
+function Get-FinalStateMap {
+    param(
+        [Parameter(Mandatory)][string] $Path,
+        [Parameter(Mandatory)][string] $EventName,
+        [Parameter(Mandatory)][string] $Description
+    )
+
+    $states = @{}
+    $number = '-?\d+(?:\.\d+)?'
+    $pattern = "^player=(?<player>Client[12]) x=(?<x>$number) y=(?<y>$number) z=(?<z>$number) health=(?<health>$number) energy=(?<energy>$number) score=(?<score>-?\d+) deaths=(?<deaths>-?\d+) shield=(?<shield>true|false) dead=(?<dead>true|false)$"
+    foreach ($line in Get-Content -LiteralPath $Path) {
+        if ([string]::IsNullOrWhiteSpace($line)) {
+            continue
+        }
+        $event = $line | ConvertFrom-Json
+        if ($event.event -ne $EventName) {
+            continue
+        }
+        $match = [regex]::Match($event.details, $pattern)
+        if (-not $match.Success) {
+            throw "Malformed $Description final state: $($event.details)"
+        }
+        $states[$match.Groups['player'].Value] = [pscustomobject]@{
+            x = [double]::Parse($match.Groups['x'].Value, [Globalization.CultureInfo]::InvariantCulture)
+            y = [double]::Parse($match.Groups['y'].Value, [Globalization.CultureInfo]::InvariantCulture)
+            z = [double]::Parse($match.Groups['z'].Value, [Globalization.CultureInfo]::InvariantCulture)
+            health = [double]::Parse($match.Groups['health'].Value, [Globalization.CultureInfo]::InvariantCulture)
+            energy = [double]::Parse($match.Groups['energy'].Value, [Globalization.CultureInfo]::InvariantCulture)
+            score = [int]$match.Groups['score'].Value
+            deaths = [int]$match.Groups['deaths'].Value
+            shield = $match.Groups['shield'].Value -eq 'true'
+            dead = $match.Groups['dead'].Value -eq 'true'
+        }
+    }
+    if ($states.Count -ne 2 -or -not $states.ContainsKey('Client1') -or -not $states.ContainsKey('Client2')) {
+        throw "$Description must contain exactly one final state for Client1 and Client2."
+    }
+    return $states
+}
+
+function Assert-FinalStateConsistency {
+    param(
+        [Parameter(Mandatory)][hashtable] $AuthorityStates,
+        [Parameter(Mandatory)][hashtable] $ObservedStates,
+        [Parameter(Mandatory)][string] $Observer
+    )
+
+    $comparisons = @()
+    foreach ($player in @('Client1', 'Client2')) {
+        $authority = $AuthorityStates[$player]
+        $observed = $ObservedStates[$player]
+        $distance = [Math]::Sqrt(
+            [Math]::Pow($authority.x - $observed.x, 2) +
+            [Math]::Pow($authority.y - $observed.y, 2) +
+            [Math]::Pow($authority.z - $observed.z, 2))
+        $healthDelta = [Math]::Abs($authority.health - $observed.health)
+        $energyDelta = [Math]::Abs($authority.energy - $observed.energy)
+        if ($distance -gt 5.0 -or $healthDelta -gt 0.15 -or $energyDelta -gt 0.15 -or
+            $authority.score -ne $observed.score -or $authority.deaths -ne $observed.deaths -or
+            $authority.shield -ne $observed.shield -or $authority.dead -ne $observed.dead) {
+            throw "Final state mismatch observer=$Observer player=$player distance=$distance health_delta=$healthDelta energy_delta=$energyDelta authority_score=$($authority.score) observed_score=$($observed.score) authority_deaths=$($authority.deaths) observed_deaths=$($observed.deaths)"
+        }
+        $comparisons += [ordered]@{
+            observer = $Observer
+            player = $player
+            positionDelta = [Math]::Round($distance, 3)
+            healthDelta = [Math]::Round($healthDelta, 3)
+            energyDelta = [Math]::Round($energyDelta, 3)
+            score = $authority.score
+            deaths = $authority.deaths
+            shield = $authority.shield
+            dead = $authority.dead
+        }
+    }
+    return $comparisons
+}
+
 function Write-ExpectedFaultReport {
     param(
         [Parameter(Mandatory)][string] $Fault,
@@ -306,7 +383,7 @@ try {
     }
 
     $serverScenarioArguments = @()
-    $serverExitAfter = if ($Scenario -eq 'Combat') { 32 } elseif ($Scenario -eq 'ServerShutdown') { 12 } elseif ($Scenario -eq 'Watchdog') { 0 } else { 20 }
+    $serverExitAfter = if ($Scenario -eq 'ServerShutdown') { 12 } elseif ($Scenario -eq 'Watchdog') { 0 } else { 40 }
     if ($Scenario -eq 'Lifecycle' -or $Scenario -eq 'DuplicateRespawn') {
         $serverScenarioArguments += '-AuthorityLifecycle'
     }
@@ -315,6 +392,15 @@ try {
     }
     if ($Scenario -eq 'DeadAbility') {
         $serverScenarioArguments += '-AuthorityMarkDead'
+    }
+    if ($Scenario -eq 'Combat') {
+        $serverScenarioArguments += '-AuthorityFinalSnapshot'
+    }
+    if ($Scenario -eq 'AttackFlood') {
+        $serverScenarioArguments += '-AuthorityFlood'
+    }
+    if ($Scenario -ne 'ServerShutdown' -and $Scenario -ne 'Watchdog') {
+        $serverScenarioArguments += '-AuthorityExitOnClientsComplete'
     }
     if ($Build -eq 'Packaged') {
         $serverScenarioArguments += '-AuthoritySuppressHostPawn'
@@ -351,6 +437,7 @@ try {
     }
     if ($Scenario -eq 'AuthorityAbuse') {
         $clientScenarioArguments += '-AuthorityAbuse'
+        $clientScenarioArguments += '-AuthorityInvalidAttack'
     }
     if ($Scenario -eq 'AttackFlood') {
         $clientScenarioArguments += '-AuthorityFlood'
@@ -495,6 +582,24 @@ try {
         client2 = Get-ValidatedEventCount -Path $client2Events -ExpectedRole 'Client2'
     }
 
+    $finalConsistency = [ordered]@{
+        verified = $false
+        positionTolerance = 5.0
+        attributeTolerance = 0.15
+        comparisons = @()
+    }
+    if ($Scenario -eq 'Combat') {
+        Require-Text $serverText 'event=FinalAuthoritySnapshotComplete context=AuthorityArenaGameMode_0 count=2' 'server captured two final authoritative states'
+        $authorityFinalStates = Get-FinalStateMap -Path $serverEvents -EventName 'FinalAuthorityState' -Description 'server authority'
+        $client1FinalStates = Get-FinalStateMap -Path $client1Events -EventName 'ClientFinalState' -Description 'Client1 observation'
+        $client2FinalStates = Get-FinalStateMap -Path $client2Events -EventName 'ClientFinalState' -Description 'Client2 observation'
+        $finalConsistency.verified = $true
+        $finalConsistency.comparisons = @(
+            Assert-FinalStateConsistency -AuthorityStates $authorityFinalStates -ObservedStates $client1FinalStates -Observer 'Client1'
+            Assert-FinalStateConsistency -AuthorityStates $authorityFinalStates -ObservedStates $client2FinalStates -Observer 'Client2'
+        )
+    }
+
     foreach ($logText in @($serverText, $client1Text, $client2Text)) {
         if ($logText -match 'Fatal error:|Unhandled Exception:|CDO Constructor \(AuthorityArena') {
             throw 'A multiplayer process log contains a fatal or AuthorityArena CDO construction error.'
@@ -621,6 +726,8 @@ try {
         targetOutOfRange = $false
         attackRateLimited = $false
         authoritativeStateUnchanged = $false
+        rejectedRequestsNonMutating = $false
+        realGasFlood = $false
     }
     if ($Scenario -eq 'AuthorityAbuse') {
         foreach ($reason in @('ForbiddenStateWrite', 'ForgedDamage', 'InvalidTarget', 'TargetOutOfRange', 'DuplicateSequence')) {
@@ -629,6 +736,12 @@ try {
         }
         if ($serverText -notmatch 'event=AuthorityPosition.*player=Client1 .*health=100\.00 energy=100\.00 score=0 deaths=0') {
             throw 'AuthorityAbuse changed Client1 authoritative Health, Energy, Score, or Deaths.'
+        }
+        Require-Text $client1Text 'event=AttackPredicted' 'Client1 predicted a real invalid-target Attack'
+        Require-Text $serverText 'event=AbilityRejected' 'real GAS Attack was rejected'
+        Require-Text $serverText 'reasons=Failure.Target' 'real GAS Attack used stable target rejection'
+        if ($serverText.Contains('event=ProjectileSpawned', [StringComparison]::Ordinal)) {
+            throw 'AuthorityAbuse invalid-target Attack spawned a projectile.'
         }
         $authorityAssertions.forbiddenStateWrite = $true
         $authorityAssertions.forgedDamage = $true
@@ -666,11 +779,25 @@ try {
         if ($acceptedCount -ne 1 -or $rateLimitedCount -lt 1) {
             throw "Unexpected flood decisions: accepted=$acceptedCount rateLimited=$rateLimitedCount"
         }
-        if ($serverText -notmatch 'event=AuthorityPosition.*player=Client1 .*health=100\.00 energy=100\.00 score=0 deaths=0') {
-            throw 'AttackFlood changed Client1 authoritative Health, Energy, Score, or Deaths.'
+        $abilityRequestCount = ([regex]::Matches(
+            $client1Text, 'event=AttackFloodAbilityRequest ')).Count
+        $abilityConfirmedCount = ([regex]::Matches(
+            $serverText, 'event=AttackConfirmed ')).Count
+        $abilityRejectedCount = ([regex]::Matches(
+            $serverText, 'event=AbilityRejected .*reasons=Cooldown.Attack')).Count
+        $projectileCount = ([regex]::Matches($serverText, 'event=ProjectileSpawned')).Count
+        if ($abilityRequestCount -ne 4 -or $abilityConfirmedCount -ne 1 -or
+            $abilityRejectedCount -ne 3 -or $projectileCount -ne 1) {
+            throw "Real GAS attack flood must be requests=4 confirmed=1 cooldown_rejected=3 projectile=1; requests=$abilityRequestCount confirmed=$abilityConfirmedCount rejected=$abilityRejectedCount projectile=$projectileCount"
         }
+        Require-Text $serverText 'reasons=Cooldown.Attack' 'real GAS Attack cooldown rejected the flood'
+        if ($serverText -notmatch 'event=AuthorityPosition.*player=Client1 .*health=100\.00 energy=95\.00 score=0 deaths=0') {
+            throw 'AttackFlood did not preserve the exact single-Attack Client1 authority state.'
+        }
+        Require-Text $serverText 'raw=34.00 applied=34.00 shield=false health=66.00' 'single accepted flood Attack applied exactly one damage event'
         $authorityAssertions.attackRateLimited = $true
-        $authorityAssertions.authoritativeStateUnchanged = $true
+        $authorityAssertions.rejectedRequestsNonMutating = $true
+        $authorityAssertions.realGasFlood = $true
     }
     $clientDisconnectObserved = $Scenario -eq 'ClientDisconnect'
 
@@ -737,6 +864,7 @@ try {
             combat = $combatAssertions
             rejection = $rejectionAssertions
             authority = $authorityAssertions
+            finalConsistency = $finalConsistency
             deadAbility = $deadAbilityAssertions
             clientDisconnectObserved = $clientDisconnectObserved
         }

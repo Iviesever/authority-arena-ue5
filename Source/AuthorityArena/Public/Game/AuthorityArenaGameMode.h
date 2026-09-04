@@ -31,6 +31,7 @@ public:
 
 private:
     void CaptureAutomationSnapshot();
+    void CaptureAutomationFinalState();
     void ScheduleAutomationLifecycle();
     void DestroyAutomationPawn();
     void FinishAutomationServerRun();
@@ -39,6 +40,7 @@ private:
     bool bAutomationSnapshotCaptured = false;
     bool bAutomationLifecycleScheduled = false;
     FTimerHandle AutomationSnapshotTimer;
+    FTimerHandle AutomationFinalSnapshotTimer;
     FTimerHandle AutomationLifecycleTimer;
     FTimerHandle AutomationExitTimer;
     TMap<TWeakObjectPtr<AAuthorityArenaPlayerController>, FTimerHandle> RespawnTimers;

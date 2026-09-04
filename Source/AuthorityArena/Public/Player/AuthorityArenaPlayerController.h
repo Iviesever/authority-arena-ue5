@@ -40,6 +40,8 @@ private:
     void TickRespawnAutomation();
     void TickAuthorityProbeAutomation();
     void TickClientExitAutomation();
+    void TickClientFinalStateAutomation();
+    void EmitClientFinalStates() const;
 
     uint32 LastAcceptedViewSequence = 0;
     uint32 LastAuthorityProbeSequence = 0;
@@ -51,6 +53,7 @@ private:
     bool bAutomationSecondRespawnRequested = false;
     bool bDuplicateRespawnAutomation = false;
     bool bAutomationClientExitRequested = false;
+    bool bAutomationFinalStatesEmitted = false;
     bool bAuthorityAbuse = false;
     bool bAuthorityFlood = false;
     bool bProbeOneSent = false;

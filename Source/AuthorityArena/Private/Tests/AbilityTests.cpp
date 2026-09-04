@@ -79,6 +79,20 @@ bool FAuthorityArenaGasContractTest::RunTest(const FString& Parameters)
     TestEqual(TEXT("Attack accepts predicted client activation"), Attack->GetNetExecutionPolicy(), EGameplayAbilityNetExecutionPolicy::LocalPredicted);
     TestNotNull(TEXT("Attack has cooldown GameplayEffect"), Attack->GetCooldownGameplayEffect());
     TestTrue(TEXT("Attack has native asset tag"), Attack->GetAssetTags().HasTagExact(AuthorityArenaTags::Ability_Attack));
+    TestTrue(TEXT("Attack target rejection has a stable native tag"),
+        AuthorityArenaTags::Failure_Target.GetTag().IsValid());
+    TestTrue(TEXT("Attack accepts a live forward target in range"),
+        UGA_ProjectileAttack::IsAuthorityTargetEligible(
+            FVector::ZeroVector, FVector::ForwardVector, FVector(800.0, 0.0, 0.0), true));
+    TestFalse(TEXT("Attack rejects an out-of-range target"),
+        UGA_ProjectileAttack::IsAuthorityTargetEligible(
+            FVector::ZeroVector, FVector::ForwardVector, FVector(1200.0, 0.0, 0.0), true));
+    TestFalse(TEXT("Attack rejects a target behind the shooter"),
+        UGA_ProjectileAttack::IsAuthorityTargetEligible(
+            FVector::ZeroVector, FVector::ForwardVector, FVector(-100.0, 0.0, 0.0), true));
+    TestFalse(TEXT("Attack rejects a dead target"),
+        UGA_ProjectileAttack::IsAuthorityTargetEligible(
+            FVector::ZeroVector, FVector::ForwardVector, FVector(100.0, 0.0, 0.0), false));
 
     const UGA_Shield* Shield = GetDefault<UGA_Shield>();
     TestEqual(TEXT("Shield is LocalPredicted"), Shield->GetNetExecutionPolicy(), EGameplayAbilityNetExecutionPolicy::LocalPredicted);

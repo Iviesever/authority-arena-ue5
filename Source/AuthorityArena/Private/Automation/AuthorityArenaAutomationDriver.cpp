@@ -1,5 +1,6 @@
 #include "Automation/AuthorityArenaAutomationDriver.h"
 
+#include "Ability/AuthorityArenaAbilitySystemComponent.h"
 #include "Ability/AuthorityArenaGameplayTags.h"
 #include "Character/AuthorityArenaCharacter.h"
 #include "Diagnostics/AuthorityArenaNetworkDiagnosticsSubsystem.h"
@@ -7,6 +8,7 @@
 #include "Game/AuthorityArenaGameState.h"
 #include "Player/AuthorityArenaPlayerController.h"
 #include "Player/AuthorityArenaPlayerState.h"
+#include "GameplayPrediction.h"
 #include "UnrealClient.h"
 
 namespace
@@ -39,6 +41,8 @@ void UAuthorityArenaAutomationDriver::BeginPlay()
     bCombat = FParse::Param(FCommandLine::Get(), TEXT("AuthorityCombat"));
     bDashOnly = FParse::Param(FCommandLine::Get(), TEXT("AuthorityDashOnly"));
     bAttackOnly = FParse::Param(FCommandLine::Get(), TEXT("AuthorityAttackOnly"));
+    bInvalidAttack = FParse::Param(FCommandLine::Get(), TEXT("AuthorityInvalidAttack"));
+    bAttackFlood = FParse::Param(FCommandLine::Get(), TEXT("AuthorityFlood"));
     FParse::Value(FCommandLine::Get(), TEXT("AuthorityMoveDuration="), MoveDurationSeconds);
     FParse::Value(FCommandLine::Get(), TEXT("AuthorityScreenshot="), ScreenshotPath);
     MoveDurationSeconds = FMath::Clamp(MoveDurationSeconds, 0.25f, 10.0f);
@@ -65,7 +69,7 @@ void UAuthorityArenaAutomationDriver::TickComponent(
 
 void UAuthorityArenaAutomationDriver::TickCombat()
 {
-    if (!bCombat && !bDashOnly && !bAttackOnly)
+    if (!bCombat && !bDashOnly && !bAttackOnly && !bInvalidAttack && !bAttackFlood)
     {
         return;
     }
@@ -114,7 +118,49 @@ void UAuthorityArenaAutomationDriver::TickCombat()
 
     if (PlayerId == TEXT("Client1"))
     {
-        if (bAttackOnly)
+        if (bAttackFlood)
+        {
+            if (AttackFloodAttempt < 4 &&
+                ElapsedSeconds >= 0.25 + static_cast<double>(AttackFloodAttempt) * 0.05)
+            {
+                UAuthorityArenaAbilitySystemComponent* AbilitySystem =
+                    PlayerState->GetAuthorityAbilitySystem();
+                TArray<FGameplayAbilitySpecHandle> AttackHandles;
+                FGameplayTagContainer AttackTags;
+                AttackTags.AddTag(AuthorityArenaTags::Ability_Attack);
+                if (AbilitySystem != nullptr)
+                {
+                    AbilitySystem->FindAllAbilitiesWithTags(AttackHandles, AttackTags, true);
+                }
+                ++AttackFloodAttempt;
+                if (AbilitySystem == nullptr || AttackHandles.Num() != 1)
+                {
+                    UAuthorityArenaNetworkDiagnosticsSubsystem::EmitEvent(
+                        this,
+                        TEXT("AttackFloodAbilityRequestFailed"),
+                        FString::Printf(TEXT("attempt=%u reason=MissingAbilitySpec"), AttackFloodAttempt));
+                }
+                else
+                {
+                    FScopedPredictionWindow PredictionWindow(AbilitySystem, true);
+                    const FPredictionKey PredictionKey = AbilitySystem->GetPredictionKeyForNewAction();
+                    AbilitySystem->CallServerTryActivateAbility(
+                        AttackHandles[0], false, PredictionKey);
+                    UAuthorityArenaNetworkDiagnosticsSubsystem::EmitEvent(
+                        this,
+                        TEXT("AttackFloodAbilityRequest"),
+                        FString::Printf(
+                            TEXT("attempt=%u prediction=%s"),
+                            AttackFloodAttempt,
+                            *PredictionKey.ToString()));
+                }
+            }
+        }
+        else if (bInvalidAttack)
+        {
+            RequestOnce(bAttackOneRequested, 0.35, AuthorityArenaTags::Ability_Attack, TEXT("InvalidTargetAttack"));
+        }
+        else if (bAttackOnly)
         {
             RequestOnce(bAttackOneRequested, 0.35, AuthorityArenaTags::Ability_Attack, TEXT("AttackWhileDead"));
         }

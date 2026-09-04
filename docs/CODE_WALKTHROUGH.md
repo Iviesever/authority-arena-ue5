@@ -18,7 +18,7 @@ The local automation/input layer calls `TryActivateAbility(Ability.Dash)`. `UGA_
 
 ## Follow an Attack
 
-`UGA_ProjectileAttack` can display predicted input locally, but only `HasAuthority` calls `UAuthorityArenaCombatComponent::SpawnProjectileAuthority`. The replicated projectile carries server-chosen transform, direction, speed, lifetime, and 34 raw damage. Only server overlap applies `UAuthorityArenaGE_ProjectileDamage` to `IncomingDamage`. Attribute execution reads the Shield tag, computes 17 or 34 applied damage, clamps Health, and invokes the idempotent death path. Score/deaths live on PlayerState; GameMode destroys and replaces the victim Pawn after one weak, cancellable timer.
+`UGA_ProjectileAttack` can display predicted input locally, but authority first requires a living opponent inside 1000 uu and its forward cone. Only `HasAuthority` calls `UAuthorityArenaCombatComponent::SpawnProjectileAuthority`. The replicated projectile carries server-chosen transform, direction, speed, lifetime, and 34 raw damage. Only server overlap applies `UAuthorityArenaGE_ProjectileDamage` to `IncomingDamage`. Attribute execution reads the Shield tag, computes 17 or 34 applied damage, clamps Health, and invokes the idempotent death path. Score/deaths live on PlayerState; GameMode destroys and replaces the victim Pawn after one weak, cancellable timer.
 
 ## Follow a hostile RPC
 
@@ -27,6 +27,8 @@ The local automation/input layer calls `TryActivateAbility(Ability.Dash)`. `UGA_
 ## Follow the evidence
 
 All significant paths call `UAuthorityArenaNetworkDiagnosticsSubsystem::EmitEvent`. Each process writes its own JSONL with schemaVersion, runId, processRole, PID, sequence, UTC, event, context, and details. `RunMultiplayerScenario.ps1` owns the process identity, readiness, one deadline, assertion text, report, and reverse-order cleanup. It never uses image-name kills.
+
+Combat's final checkpoint is intentionally redundant: the server emits both authoritative player states, each client emits both replicated states before disconnect, and PowerShell performs four field-by-field comparisons. This connects the Core snapshot concept to real three-process evidence rather than leaving it as a unit-only helper.
 
 `AAuthorityArenaHUD::DrawHUD` reads replicated attributes/tags/score/deaths and local network observations. It never writes authoritative state. `AAuthorityArenaWorldBuilder` uses C++ default subobjects and Engine BasicShapes, lights, labels, and collision, so no manual map authoring or custom content asset is required.
 

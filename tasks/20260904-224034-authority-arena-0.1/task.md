@@ -598,7 +598,7 @@ Core MQB tests、ProjectStructure、UE `AuthorityArena.*` Automation、headless�
 
 运行 `Verify-Documentation.ps1`，再人工逐项比对 README 与当前代码/报告，不把未跑配置写成 PASS。
 
-- [ ] **Step 4：派发全新只读独立审计**
+- [x] **Step 4：派发全新只读独立审计**
 
 审计 Agent 禁止写仓库；按目标原文和 `ACCEPTANCE_MATRIX.md` 逐项检查 Git status、代码、命令、日志/JSON、截图、包 manifest、clean-source、PR/CI，按 Blocker/High/Medium/Low 输出带证据发现。
 

@@ -32,19 +32,19 @@ Statuses are `NOT RUN`, `RED`, `PASS`, `FAIL`, or `N/A` with a reason. `PASS` re
 | PACT-20.03 | GAS Tag/Effect Shield with energy and damage reduction | PASS | Native duration tag/effect; clean Combat first hit raw 34/applied 17, later 34 |
 | PACT-20.04 | ASC/AttributeSet/Ability/Effect/Tags/Cue boundary/Prediction Key/Spec lifecycle | PASS | GAS Automation 1/1 + clean multi-process evidence; ASC on PlayerState Mixed, native effects/tags/specs, impact multicast boundary |
 | PACT-30.01 | Client cannot set Health or Score | PASS | Clean AuthorityAbuse: `ForbiddenStateWrite`; post-probe Health/Energy 100, Score/Deaths 0 |
-| PACT-30.02 | Client cannot forge damage or exceed attack rate | PASS | Clean AuthorityAbuse `ForgedDamage`; AttackFlood 1 accepted + 3 `RateLimited` |
-| PACT-30.03 | Energy/dead/target/respawn/RPC validation fails closed | PASS | Clean DashRejected, DeadAbility, AuthorityAbuse and DuplicateRespawn reports at `148a1b1` |
+| PACT-30.02 | Client cannot forge damage or exceed attack rate | RED | Independent audit found only Core probe flood coverage; real GAS 1-confirm/3-cooldown-reject fix is exploratory green, clean rerun pending |
+| PACT-30.03 | Energy/dead/target/respawn/RPC validation fails closed | RED | Independent audit found target coverage only in a probe; authority geometry + predicted `Failure.Target` fix is exploratory green, clean rerun pending |
 | PACT-30.04 | Rejection is structured, non-mutating, non-crashing and convergent | PASS | Stable reason events, unchanged snapshots, predicted correction, all owned processes exit 0/leak 0 |
 | PACT-40.01 | PowerShell discovers UE, unique port, ready/connect/action/final workflow | PASS | Clean matrices at `aef2a5e`; unique RunId/port, real listener/ready markers and bounded exits |
-| PACT-40.02 | JSON from server and both clients verifies full combat lifecycle | PASS | Three validated JSONL streams per profile plus `report.json`; event counts in `network-matrix.json` |
+| PACT-40.02 | JSON from server and both clients verifies full combat lifecycle | RED | Audit found no final state comparison; four-pair `finalConsistency` fix is exploratory green, clean matrix pending |
 | PACT-40.03 | Cleanup owns exact processes and preserves unrelated processes | PASS | PID/start/path identity; watchdog leak 0; unrelated `cookscope-ue5` process observed and untouched |
 | PACT-40.04 | Baseline, 60 ms, 120 ms, jitter, loss | PASS | Five clean full-Combat reports, strict verifier, `docs/examples/network-matrix.json` |
 | PACT-40.05 | Client disconnect, server shutdown, client connect failure | PASS | Clean ClientDisconnect and two `PASS_EXPECTED_FAULT` reports with C++ NetworkFailure exits |
-| PACT-40.06 | Rejection, attack flood, invalid target, timeout/watchdog | PASS | Clean failure matrix 9/9; watchdog runner exit 1, logs kept, owned leak 0 |
+| PACT-40.06 | Rejection, attack flood, invalid target, timeout/watchdog | RED | Audit required real GAS flood/target plus source-bound watchdog; fixes are exploratory green, clean matrix pending |
 | PACT-40.07 | Functional assertions separated from timing observations | PASS | Functional booleans separate from `observations`; every report sets `deterministicTimingClaim=false` |
 | PACT-50.01 | Distinct players and visible Health/Energy/Cooldown/roles/network data | PASS | C++ HUD + blue/orange lights/labels; clean two-client viewport screenshot at `3611c5f` |
 | PACT-50.02 | Visible Dash states, projectile, shield, death/respawn/score/events | PASS | Colored recent-event list and `PROJECTILE HIT // SERVER CONFIRMED`; screenshot shows impacts, Death, Score, Shield |
-| PACT-50.03 | Real two-client screenshot from current SHA | PASS | 1680×560 PNG, 635,976 bytes, SHA-256 `374FDBF5DE651D8E670990C64627B67E5588051AC84C0290B7CE4ABCD962DA28` |
+| PACT-50.03 | Real two-client screenshot source-bound to its capture SHA | PASS | Source `3611c5ff740706bc38680a2cb3c5b43bc94856d4`; 1680×560, 635,976 bytes, SHA-256 `374FDB…A28` |
 | PACT-50.04 | Architecture, replication and GAS diagrams | PASS | `docs/images/architecture.png`, `replication-flow.png`, `gas-flow.png`; visually inspected |
 | PACT-50.05 | Structured network report; optional trace remains ignored | PASS | `docs/examples/network-matrix.json`; per-process JSONL retained in ignored Artifacts; no trace claimed |
 | PACT-60.01 | Core, Attribute/Effect, Ability, RepNotify, validation, lifecycle, config tests | PASS | Clean `568b57e`: MQB 41 assertions; UE Automation 3/3; contract/structure/document verifiers pass |
@@ -52,17 +52,17 @@ Statuses are `NOT RUN`, `RED`, `PASS`, `FAIL`, or `N/A` with a reason. `PASS` re
 | PACT-60.03 | UE Automation, headless and interactive verification | PASS | Clean Automation 3/3 and Shipping headless run `f5254a4`; packaged D3D11 interactive run `1f8fa32` exit 0 |
 | PACT-60.04 | BuildCookRun/Cook/Stage/Pak/conditional IoStore/Archive | PASS | Clean `568b57e` Shipping + Development manifests; both record all six stages true and Pak/UTOC/UCAS present |
 | PACT-60.05 | Packaged executable and packaged two-client scenario | PASS | Shipping structured smoke `f5254a4`; Development packaged Combat `5472e7f`, three distinct processes and full lifecycle |
-| PACT-60.06 | Clean-source full rebuild and verification | PASS | `Artifacts/clean-checkout/568b57e5-20260905-031936/Artifacts/clean-source-report.json`; exact detached SHA, dirty=false, owned survivors 0 |
-| PACT-60.07 | Artifact SHA-256 and source SHA binding | PASS | Source `568b57e5f99dc28d4f70f64a5fee3829cd08e4db`; Shipping fingerprint `0EC9AB…BEF`, Development `968E8C…4E0`; per-file hashes revalidated |
+| PACT-60.06 | Clean-source full rebuild and verification | RED | Audit found final runner changes newer than clean source `568b57e`; rerun required after fixes |
+| PACT-60.07 | Artifact SHA-256 and source SHA binding | RED | Audit found current HEAD not package-bound; final fix SHA must produce new Shipping/Development manifests |
 | PACT-70.01 | README and optionality-resolved README_ZH | PASS | Clean documentation verifier at `568b57e`; English first-page 8/8 and Chinese README present |
 | PACT-70.02 | All required architecture/network/GAS/authority/test/build docs | PASS | Clean documentation verifier: 17 required portfolio/source-contract files |
 | PACT-70.03 | AI disclosure, walkthrough, interview guide and three live drills | PASS | Five exact disclosure statements, 15 interview topics and all three independent drills validated |
 | PACT-70.04 | Rollback versus UE replication comparison | PASS | Comparison covers goal, ownership, prediction, correction, bandwidth, determinism and use case; no rollback claim |
-| PACT-70.05 | Independent audit has no Blocker/High | NOT RUN | — |
+| PACT-70.05 | Independent audit has no Blocker/High | FAIL | First final audit: Blocker 0, High 3, Medium 3; fixes and a new independent audit required |
 | PACT-70.06 | PR ready and merged with normal merge commit | NOT RUN | — |
 | PACT-70.07 | Annotated `v0.1.0` tag | NOT RUN | — |
 | PACT-70.08 | Non-draft source-only Release with empty custom assets | NOT RUN | — |
 
 ## Current release decision
 
-`NOT ELIGIBLE YET`: PACT-00 through PACT-50 are complete and PACT-60 package/runtime checks have passing development evidence. Final clean-source verification, current-SHA full rerun, CI, independent audit, merge, tag, and source-only Release remain mandatory; no tag or Release may be created before those rows pass.
+`NOT ELIGIBLE`: independent audit found three High gaps. Final-state consistency, real GAS target/flood coverage and watchdog/process evidence are implemented only in an uncommitted exploratory state. A clean commit, complete rerun, new package/clean-source evidence, second independent audit, CI, merge, tag and source-only Release remain mandatory.

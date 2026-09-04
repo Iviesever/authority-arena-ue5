@@ -44,7 +44,7 @@ pwsh -NoProfile -File .\scripts\Test-Watchdog.ps1
 
 Every normal report requires three distinct exit-zero processes and three valid event streams. JSONL rows must carry schema 1, exact runId/processRole, and strictly increasing sequence. Functional fields decide pass/fail. Wall-clock duration, packet settings, ping, loss, and correction counts are observations, never deterministic benchmark claims.
 
-Packaged runners use `gameExecutable`, not the root bootstrap. A historical test that owned only the bootstrap left its child Shipping game alive; the exact old PID/path was identified and removed, then direct-game smoke/Combat runs proved zero survivors. This regression is locked by `Test-ProjectStructure.ps1`.
+Packaged runners use `gameExecutable`, not the root bootstrap. A historical test that owned only the bootstrap left its child Shipping game alive; the exact old PID/path was identified and removed, then direct-game smoke/Combat runs proved zero survivors. This regression is locked by `Test-ProjectStructure.ps1`. Watchdog evidence also binds source SHA, dirty state, UTC and all three role/PID identities.
 
 ## Packaged checks
 

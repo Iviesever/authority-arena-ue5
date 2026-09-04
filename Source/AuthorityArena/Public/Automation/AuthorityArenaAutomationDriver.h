@@ -33,6 +33,8 @@ private:
     bool bCombat = false;
     bool bDashOnly = false;
     bool bAttackOnly = false;
+    bool bInvalidAttack = false;
+    bool bAttackFlood = false;
     bool bMoveStarted = false;
     bool bMoveCompleted = false;
     bool bRoleSnapshotEmitted = false;
@@ -44,4 +46,5 @@ private:
     bool bAttackThreeRequested = false;
     bool bAttackFourRequested = false;
     bool bScreenshotRequested = false;
+    uint32 AttackFloodAttempt = 0;
 };

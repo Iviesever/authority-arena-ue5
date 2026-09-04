@@ -39,6 +39,28 @@ if (-not $runIdMatch.Success) {
     throw 'Unable to recover watchdog RunId from the server log.'
 }
 $runId = $runIdMatch.Groups[1].Value
+$processes = @()
+foreach ($role in @('server', 'client1', 'client2')) {
+    $eventPath = Join-Path $newRun.FullName "$role.jsonl"
+    if (-not (Test-Path -LiteralPath $eventPath -PathType Leaf)) {
+        throw "Watchdog did not preserve $role.jsonl."
+    }
+    $firstEvent = Get-Content -LiteralPath $eventPath -First 1 | ConvertFrom-Json
+    $expectedRole = switch ($role) {
+        'server' { 'Server' }
+        'client1' { 'Client1' }
+        'client2' { 'Client2' }
+    }
+    if ($firstEvent.runId -ne $runId -or $firstEvent.processRole -ne $expectedRole -or
+        [int]$firstEvent.pid -le 0) {
+        throw "Watchdog $role event identity is invalid."
+    }
+    $processes += [ordered]@{
+        role = $expectedRole
+        pid = [int]$firstEvent.pid
+        remaining = $false
+    }
+}
 $ownedRemainder = @(
     Get-CimInstance Win32_Process |
         Where-Object { $_.CommandLine -like "*AuthorityRunId=$runId*" }
@@ -46,15 +68,22 @@ $ownedRemainder = @(
 if ($ownedRemainder.Count -ne 0) {
     throw "Watchdog left $($ownedRemainder.Count) owned process(es) running for $runId."
 }
+$sourceSha = (& git -C $repositoryRoot rev-parse HEAD).Trim()
+$workingTreeDirty = -not [string]::IsNullOrWhiteSpace(
+    ((& git -C $repositoryRoot status --porcelain) -join "`n"))
 
 $result = [ordered]@{
     schemaVersion = 1
     scenario = 'Watchdog'
     runId = $runId
+    sourceSha = $sourceSha
+    workingTreeDirty = $workingTreeDirty
+    verifiedUtc = [datetime]::UtcNow.ToString('o', [Globalization.CultureInfo]::InvariantCulture)
     runnerExitCode = $runnerExitCode
     timeoutObserved = $true
     logsPreserved = $true
     ownedProcessLeakCount = 0
+    processes = $processes
     result = 'PASS_EXPECTED_FAILURE'
 }
 $resultPath = Join-Path $newRun.FullName 'watchdog-test.json'

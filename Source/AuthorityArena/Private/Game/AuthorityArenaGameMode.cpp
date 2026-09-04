@@ -194,6 +194,16 @@ void AAuthorityArenaGameMode::PostLogin(APlayerController* NewPlayer)
                 }
             }
         }
+        if (FParse::Param(FCommandLine::Get(), TEXT("AuthorityFinalSnapshot")) &&
+            !GetWorldTimerManager().IsTimerActive(AutomationFinalSnapshotTimer))
+        {
+            GetWorldTimerManager().SetTimer(
+                AutomationFinalSnapshotTimer,
+                this,
+                &AAuthorityArenaGameMode::CaptureAutomationFinalState,
+                12.0f,
+                false);
+        }
         ScheduleAutomationLifecycle();
     }
 }
@@ -219,6 +229,21 @@ void AAuthorityArenaGameMode::Logout(AController* Exiting)
         ArenaController->ClearRespawnPendingAuthority();
     }
     Super::Logout(Exiting);
+    const int32 ExpectedRemainingPlayers =
+        GetNetMode() == NM_ListenServer &&
+        FParse::Param(FCommandLine::Get(), TEXT("AuthoritySuppressHostPawn"))
+            ? 1
+            : 0;
+    if (HasAuthority() && GetNumPlayers() <= ExpectedRemainingPlayers &&
+        FParse::Param(FCommandLine::Get(), TEXT("AuthorityExitOnClientsComplete")))
+    {
+        GetWorldTimerManager().SetTimer(
+            AutomationExitTimer,
+            this,
+            &AAuthorityArenaGameMode::FinishAutomationServerRun,
+            0.10f,
+            false);
+    }
 }
 
 void AAuthorityArenaGameMode::RestartPlayer(AController* NewPlayer)
@@ -462,6 +487,52 @@ void AAuthorityArenaGameMode::CaptureAutomationSnapshot()
     UAuthorityArenaNetworkDiagnosticsSubsystem::EmitEvent(
         this,
         TEXT("AuthoritySnapshotComplete"),
+        FString::Printf(TEXT("count=%d"), SnapshotCount));
+}
+
+void AAuthorityArenaGameMode::CaptureAutomationFinalState()
+{
+    int32 SnapshotCount = 0;
+    for (TActorIterator<AAuthorityArenaCharacter> It(GetWorld()); It; ++It)
+    {
+        const AAuthorityArenaCharacter* Character = *It;
+        const AAuthorityArenaPlayerState* PlayerState =
+            Character->GetPlayerState<AAuthorityArenaPlayerState>();
+        if (PlayerState == nullptr ||
+            (PlayerState->GetConnectionId() != TEXT("Client1") &&
+             PlayerState->GetConnectionId() != TEXT("Client2")))
+        {
+            continue;
+        }
+        const UAuthorityArenaAttributeSet* Attributes =
+            PlayerState->GetAuthorityAttributeSet();
+        const UAuthorityArenaAbilitySystemComponent* AbilitySystem =
+            PlayerState->GetAuthorityAbilitySystem();
+        const FVector Location = Character->GetActorLocation();
+        UAuthorityArenaNetworkDiagnosticsSubsystem::EmitEvent(
+            this,
+            TEXT("FinalAuthorityState"),
+            FString::Printf(
+                TEXT("player=%s x=%.2f y=%.2f z=%.2f health=%.2f energy=%.2f score=%d deaths=%d shield=%s dead=%s"),
+                *PlayerState->GetConnectionId(),
+                Location.X,
+                Location.Y,
+                Location.Z,
+                Attributes ? Attributes->GetHealth() : -1.0f,
+                Attributes ? Attributes->GetEnergy() : -1.0f,
+                PlayerState->GetScoreValue(),
+                PlayerState->GetDeathCount(),
+                AbilitySystem != nullptr &&
+                    AbilitySystem->HasMatchingGameplayTag(AuthorityArenaTags::State_Shield_Active)
+                    ? TEXT("true") : TEXT("false"),
+                AbilitySystem != nullptr &&
+                    AbilitySystem->HasMatchingGameplayTag(AuthorityArenaTags::State_Dead)
+                    ? TEXT("true") : TEXT("false")));
+        ++SnapshotCount;
+    }
+    UAuthorityArenaNetworkDiagnosticsSubsystem::EmitEvent(
+        this,
+        TEXT("FinalAuthoritySnapshotComplete"),
         FString::Printf(TEXT("count=%d"), SnapshotCount));
 }
 

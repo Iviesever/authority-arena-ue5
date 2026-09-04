@@ -84,7 +84,8 @@ foreach ($dependency in @('AuthorityArenaCore', 'GameplayAbilities', 'GameplayTa
 
 $allCpp = Get-ChildItem -LiteralPath (Join-Path $repositoryRoot 'Source') -Recurse -File -Include *.h,*.cpp |
     Get-Content -Raw
-if ($allCpp -match 'BlueprintImplementableEvent|BlueprintNativeEvent') {
+$allCppText = $allCpp -join "`n"
+if ($allCppText -match 'BlueprintImplementableEvent|BlueprintNativeEvent') {
     throw 'PACT-00 source may not delegate required behavior to Blueprint events.'
 }
 
@@ -115,6 +116,19 @@ foreach ($requiredPackagedMultiplayerContract in @(
 $gameModeSource = Get-Content -LiteralPath (Join-Path $repositoryRoot 'Source\AuthorityArena\Private\Game\AuthorityArenaGameMode.cpp') -Raw
 if (-not $gameModeSource.Contains('AuthoritySuppressHostPawn', [StringComparison]::Ordinal)) {
     throw 'GameMode is missing explicit packaged listen-server host-pawn suppression for E2E.'
+}
+foreach ($finalStateContract in @('FinalAuthorityState', 'ClientFinalState')) {
+    if (-not $allCppText.Contains($finalStateContract, [StringComparison]::Ordinal)) {
+        throw "C++ multi-process evidence is missing '$finalStateContract'."
+    }
+}
+foreach ($runnerEvidenceContract in @('finalConsistency', 'AttackFloodAbilityRequest')) {
+    if (-not $multiplayerRunner.Contains($runnerEvidenceContract, [StringComparison]::Ordinal)) {
+        throw "Multiplayer runner is missing evidence contract '$runnerEvidenceContract'."
+    }
+}
+if (-not $allCppText.Contains('CallServerTryActivateAbility', [StringComparison]::Ordinal)) {
+    throw 'Attack flood automation does not use the native GAS server activation path.'
 }
 
 $packageScript = Get-Content -LiteralPath (Join-Path $repositoryRoot 'scripts\Package-Win64.ps1') -Raw

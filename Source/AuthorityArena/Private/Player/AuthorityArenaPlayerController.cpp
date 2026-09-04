@@ -45,7 +45,19 @@ void AAuthorityArenaPlayerController::Tick(const float DeltaSeconds)
     }
     TickRespawnAutomation();
     TickAuthorityProbeAutomation();
+    TickClientFinalStateAutomation();
     TickClientExitAutomation();
+}
+
+void AAuthorityArenaPlayerController::TickClientFinalStateAutomation()
+{
+    if (bAutomationFinalStatesEmitted || AutomationClientExitSeconds <= 2.0f ||
+        GetWorld()->GetTimeSeconds() - AutomationStartSeconds < AutomationClientExitSeconds - 2.0f)
+    {
+        return;
+    }
+    bAutomationFinalStatesEmitted = true;
+    EmitClientFinalStates();
 }
 
 void AAuthorityArenaPlayerController::TickClientExitAutomation()
@@ -72,7 +84,52 @@ void AAuthorityArenaPlayerController::TickClientExitAutomation()
             Location.Y,
             Attributes ? Attributes->GetHealth() : -1.0f,
             Attributes ? Attributes->GetEnergy() : -1.0f));
+    if (!bAutomationFinalStatesEmitted)
+    {
+        bAutomationFinalStatesEmitted = true;
+        EmitClientFinalStates();
+    }
     FGenericPlatformMisc::RequestExit(false);
+}
+
+void AAuthorityArenaPlayerController::EmitClientFinalStates() const
+{
+    for (TActorIterator<AAuthorityArenaCharacter> It(GetWorld()); It; ++It)
+    {
+        const AAuthorityArenaCharacter* ArenaCharacter = *It;
+        const AAuthorityArenaPlayerState* ArenaPlayerState =
+            ArenaCharacter->GetPlayerState<AAuthorityArenaPlayerState>();
+        if (ArenaPlayerState == nullptr ||
+            (ArenaPlayerState->GetConnectionId() != TEXT("Client1") &&
+             ArenaPlayerState->GetConnectionId() != TEXT("Client2")))
+        {
+            continue;
+        }
+        const UAuthorityArenaAttributeSet* FinalAttributes =
+            ArenaPlayerState->GetAuthorityAttributeSet();
+        const UAuthorityArenaAbilitySystemComponent* FinalAbilitySystem =
+            ArenaPlayerState->GetAuthorityAbilitySystem();
+        const FVector FinalLocation = ArenaCharacter->GetActorLocation();
+        UAuthorityArenaNetworkDiagnosticsSubsystem::EmitEvent(
+            this,
+            TEXT("ClientFinalState"),
+            FString::Printf(
+                TEXT("player=%s x=%.2f y=%.2f z=%.2f health=%.2f energy=%.2f score=%d deaths=%d shield=%s dead=%s"),
+                *ArenaPlayerState->GetConnectionId(),
+                FinalLocation.X,
+                FinalLocation.Y,
+                FinalLocation.Z,
+                FinalAttributes ? FinalAttributes->GetHealth() : -1.0f,
+                FinalAttributes ? FinalAttributes->GetEnergy() : -1.0f,
+                ArenaPlayerState->GetScoreValue(),
+                ArenaPlayerState->GetDeathCount(),
+                FinalAbilitySystem != nullptr &&
+                    FinalAbilitySystem->HasMatchingGameplayTag(AuthorityArenaTags::State_Shield_Active)
+                    ? TEXT("true") : TEXT("false"),
+                FinalAbilitySystem != nullptr &&
+                    FinalAbilitySystem->HasMatchingGameplayTag(AuthorityArenaTags::State_Dead)
+                    ? TEXT("true") : TEXT("false")));
+    }
 }
 
 void AAuthorityArenaPlayerController::TickRespawnAutomation()

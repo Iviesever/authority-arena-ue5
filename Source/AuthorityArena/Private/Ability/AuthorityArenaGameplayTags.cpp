@@ -15,4 +15,5 @@ UE_DEFINE_GAMEPLAY_TAG_COMMENT(Failure_Dead, "Failure.Dead", "Activation rejecte
 UE_DEFINE_GAMEPLAY_TAG_COMMENT(Failure_Stunned, "Failure.Stunned", "Activation rejected because actor is stunned");
 UE_DEFINE_GAMEPLAY_TAG_COMMENT(Failure_Resource, "Failure.Resource", "Activation rejected for insufficient resources");
 UE_DEFINE_GAMEPLAY_TAG_COMMENT(Failure_Cooldown, "Failure.Cooldown", "Activation rejected because cooldown is active");
+UE_DEFINE_GAMEPLAY_TAG_COMMENT(Failure_Target, "Failure.Target", "Activation rejected because the server target is invalid");
 }
