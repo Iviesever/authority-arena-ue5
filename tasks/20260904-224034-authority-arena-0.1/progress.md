@@ -279,3 +279,15 @@ Result: exit `1` at missing `CoreMinimal.h`. MQB does not reconstruct `.uproject
 - Network timing/duration remains observation-only (`deterministicTimingClaim=false`).
 - Sanitized evidence: `docs/examples/network-matrix.json`, `docs/examples/failure-matrix.json`.
 - PACT-40 complete; PACT-50 visible diagnostics and screenshots are next.
+
+## 2026-09-05 02:20 UTC+8 — PACT-50 HUD and visual evidence
+
+- HUD RED: missing HUD/movement types. Implemented default C++ HUD, percent tests, cooldown queries, real CharacterMovement correction override, ping/config lag/loss, attributes/tags/score/deaths and recent events. UI Automation passed.
+- First desktop screenshot was rejected during visual QA because DPI placement clipped Client2 and an unrelated UAC dialog overlaid the image.
+- Replaced desktop capture with two UE viewport screenshots composed side-by-side; this removed external UI but revealed a black unlit Entry world.
+- Added C++ Directional/Sky/Point lights after UI tests first failed their absence; the graybox became visible.
+- Added C++ TextRender identifiers and blue/orange PointLights after tests first failed their absence; corrected mirrored label yaw after visual inspection.
+- Projectile impact multicast initially raced same-frame Actor destruction. Keeping the stopped/collision-disabled Projectile alive 0.25 s delivered the multicast; the HUD now retains orange impact events and both clients show a yellow server-confirmed hit message.
+- Final clean capture source: `3611c5ff740706bc38680a2cb3c5b43bc94856d4`, run `5d257488a3d2416eaab4ff13e5420508`, Lag60, 1680×560, 635,976 bytes, PNG SHA-256 `374FDBF5DE651D8E670990C64627B67E5588051AC84C0290B7CE4ABCD962DA28`, owned leak 0.
+- Architecture/replication/GAS diagrams were generated from actual class/RPC names and visually inspected for clipping and flow accuracy.
+- PACT-50 complete; PACT-60 full build/package/clean-source delivery begins next.

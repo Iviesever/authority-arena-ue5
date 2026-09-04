@@ -489,23 +489,23 @@ baseline 连续至少三次；每次端口不同、runId 不同、结果通过�
 - `AAuthorityArenaHUD::DrawHUD()` 仅从复制/本地诊断读取，不改权威状态。
 - 显示 Health/Energy/Cooldowns、LocalRole/RemoteRole、ping/loss/corrections、Dash predicted/confirmed/rejected、Shield、Death/Respawn/Score 和最近权威事件。
 
-- [ ] **Step 1：RED—HUD view-model 测试**
+- [x] **Step 1：RED—HUD view-model 测试**
 
 将格式化逻辑放入可测 helper，先测试 role 名称、百分比钳制、cooldown、拒绝事件与断连状态；观察失败。
 
-- [ ] **Step 2：实现纯 C++ HUD 与表现反馈**
+- [x] **Step 2：实现纯 C++ HUD 与表现反馈**
 
 两名角色使用稳定高对比颜色；Dash 预测/确认/拒绝、Projectile impact、Shield 用不同短暂颜色/形状；支持窗口化双客户端同屏截图。
 
-- [ ] **Step 3：GREEN 与可交互双客户端**
+- [x] **Step 3：GREEN 与可交互双客户端**
 
 运行 helper tests 与 baseline；以两个真实独立客户端窗口获得截图。截图前记录源 SHA，确认图中可见两个 client 的不同 playerId/role/状态。
 
-- [ ] **Step 4：生成真实图示与精简报告**
+- [x] **Step 4：生成真实图示与精简报告**
 
 架构/复制/GAS 流图必须与当前代码类型和 RPC 名称一致；network-report 从本轮 JSON 抽取并去除机器敏感绝对路径。
 
-- [ ] **Step 5：提交**
+- [x] **Step 5：提交**
 
 核验 PNG 尺寸/体积与来源 SHA，提交 `feat: add observable multiplayer demonstration` 并 push。
 
