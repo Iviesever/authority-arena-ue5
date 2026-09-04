@@ -79,15 +79,17 @@ function Wait-LogMarkers {
         }
         if (Test-Path -LiteralPath $LogPath -PathType Leaf) {
             $text = Get-Content -LiteralPath $LogPath -Raw
-            $allPresent = $true
-            foreach ($marker in $Markers) {
-                if (-not $text.Contains($marker, [StringComparison]::Ordinal)) {
-                    $allPresent = $false
-                    break
+            if (-not [string]::IsNullOrEmpty($text)) {
+                $allPresent = $true
+                foreach ($marker in $Markers) {
+                    if (-not $text.Contains($marker, [StringComparison]::Ordinal)) {
+                        $allPresent = $false
+                        break
+                    }
                 }
-            }
-            if ($allPresent) {
-                return
+                if ($allPresent) {
+                    return
+                }
             }
         }
         Start-Sleep -Milliseconds 250
@@ -146,7 +148,7 @@ try {
         '/Engine/Maps/Entry?listen',
         '-server',
         "-port=$port",
-        '-AuthorityExitAfter=14',
+        '-AuthorityExitAfter=20',
         "-abslog=$serverLog"
     ) + $commonArguments)
     $ownedProcesses.Add($server)
@@ -211,6 +213,10 @@ try {
     Require-Text $serverText 'role=Authority' 'server observed authority roles'
     Require-Text $client1Text 'event=AutoMoveComplete' 'Client1 completed movement input'
     Require-Text $client2Text 'event=AutoMoveComplete' 'Client2 completed movement input'
+    if ($client1Text.Contains('net_mode=Standalone', [StringComparison]::Ordinal) -or
+        $client2Text.Contains('net_mode=Standalone', [StringComparison]::Ordinal)) {
+        throw 'A client fell back into a standalone match after the authoritative server exited.'
+    }
 
     $client1Position = [regex]::Match($serverText, 'event=AuthorityPosition.*player=Client1 x=(-?\d+(?:\.\d+)?)')
     $client2Position = [regex]::Match($serverText, 'event=AuthorityPosition.*player=Client2 x=(-?\d+(?:\.\d+)?)')
