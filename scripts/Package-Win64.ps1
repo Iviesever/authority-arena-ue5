@@ -84,7 +84,7 @@ $payloadFiles = @(
     $allFiles |
         Where-Object { $_.Extension -in @('.exe', '.dll', '.pak', '.utoc', '.ucas') } |
         ForEach-Object {
-            [ordered]@{
+            [pscustomobject][ordered]@{
                 relativePath = [System.IO.Path]::GetRelativePath($OutputDirectory, $_.FullName).Replace('\', '/')
                 bytes = [long]$_.Length
                 sha256 = (Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash
@@ -97,6 +97,7 @@ $fingerprintInput = ($payloadFiles | ForEach-Object {
 }) -join "`n"
 $packageFingerprintSha256 = [Convert]::ToHexString(
     [Security.Cryptography.SHA256]::HashData([Text.Encoding]::UTF8.GetBytes($fingerprintInput)))
+$payloadBytes = [long](($payloadFiles | ForEach-Object { [long]$_.bytes } | Measure-Object -Sum).Sum)
 
 $manifestPath = Join-Path $OutputDirectory 'package-manifest.json'
 $manifest = [ordered]@{
@@ -113,7 +114,7 @@ $manifest = [ordered]@{
     gameExecutable = $gameExecutable.FullName
     gameExecutableSha256 = (Get-FileHash -LiteralPath $gameExecutable.FullName -Algorithm SHA256).Hash
     packageFingerprintSha256 = $packageFingerprintSha256
-    payloadBytes = [long](($payloadFiles | Measure-Object bytes -Sum).Sum)
+    payloadBytes = $payloadBytes
     payloadFiles = $payloadFiles
     totalBytes = [long](($allFiles | Measure-Object Length -Sum).Sum)
     fileCount = $allFiles.Count
