@@ -4,13 +4,17 @@
 #include "Ability/AuthorityArenaAbilitySystemComponent.h"
 #include "Ability/AuthorityArenaGameplayTags.h"
 #include "Camera/CameraComponent.h"
+#include "Camera/PlayerCameraManager.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/InputComponent.h"
+#include "Components/PointLightComponent.h"
 #include "Components/StaticMeshComponent.h"
+#include "Components/TextRenderComponent.h"
 #include "Combat/AuthorityArenaCombatComponent.h"
 #include "Combat/AuthorityArenaHealthComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/Controller.h"
+#include "GameFramework/PlayerController.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "Materials/MaterialInstanceDynamic.h"
 #include "Movement/AuthorityArenaCharacterMovementComponent.h"
@@ -49,6 +53,23 @@ AAuthorityArenaCharacter::AAuthorityArenaCharacter(const FObjectInitializer& Obj
         BodyMesh->SetStaticMesh(CylinderMesh.Object);
     }
 
+    PlayerLabel = CreateDefaultSubobject<UTextRenderComponent>(TEXT("PlayerLabel"));
+    PlayerLabel->SetupAttachment(GetCapsuleComponent());
+    PlayerLabel->SetRelativeLocation(FVector(0.0f, 0.0f, 155.0f));
+    PlayerLabel->SetHorizontalAlignment(EHTA_Center);
+    PlayerLabel->SetVerticalAlignment(EVRTA_TextCenter);
+    PlayerLabel->SetWorldSize(42.0f);
+    PlayerLabel->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+    PlayerLabel->SetText(FText::FromString(TEXT("PLAYER")));
+
+    PlayerLight = CreateDefaultSubobject<UPointLightComponent>(TEXT("PlayerLight"));
+    PlayerLight->SetupAttachment(GetCapsuleComponent());
+    PlayerLight->SetRelativeLocation(FVector(0.0f, 0.0f, 35.0f));
+    PlayerLight->SetMobility(EComponentMobility::Movable);
+    PlayerLight->SetIntensity(18000.0f);
+    PlayerLight->SetAttenuationRadius(420.0f);
+    PlayerLight->SetCastShadows(false);
+
     CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
     CameraBoom->SetupAttachment(RootComponent);
     CameraBoom->TargetArmLength = 650.0f;
@@ -68,6 +89,18 @@ void AAuthorityArenaCharacter::Tick(const float DeltaSeconds)
 {
     Super::Tick(DeltaSeconds);
     UpdateAppearance();
+    if (bAppearanceInitialized && PlayerLabel != nullptr && GetWorld() != nullptr)
+    {
+        if (const APlayerController* LocalController = GetWorld()->GetFirstPlayerController())
+        {
+            if (LocalController->PlayerCameraManager != nullptr)
+            {
+                const FVector ToCamera =
+                    LocalController->PlayerCameraManager->GetCameraLocation() - PlayerLabel->GetComponentLocation();
+                PlayerLabel->SetWorldRotation(FRotator(0.0f, ToCamera.Rotation().Yaw, 0.0f));
+            }
+        }
+    }
 }
 
 void AAuthorityArenaCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -139,8 +172,11 @@ void AAuthorityArenaCharacter::UpdateAppearance()
     if (UMaterialInstanceDynamic* Material = BodyMesh->CreateAndSetMaterialInstanceDynamic(0))
     {
         Material->SetVectorParameterValue(TEXT("Color"), PlayerColor);
-        bAppearanceInitialized = true;
     }
+    PlayerLabel->SetText(FText::FromString(ArenaPlayerState->GetConnectionId().ToUpper()));
+    PlayerLabel->SetTextRenderColor(PlayerColor.ToFColor(true));
+    PlayerLight->SetLightColor(PlayerColor);
+    bAppearanceInitialized = true;
 }
 
 void AAuthorityArenaCharacter::MoveForward(const float Value)

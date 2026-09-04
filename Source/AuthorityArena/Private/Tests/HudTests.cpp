@@ -3,9 +3,14 @@
 #include "Misc/AutomationTest.h"
 
 #include "Character/AuthorityArenaCharacter.h"
+#include "Components/DirectionalLightComponent.h"
+#include "Components/PointLightComponent.h"
+#include "Components/SkyLightComponent.h"
+#include "Components/TextRenderComponent.h"
 #include "Game/AuthorityArenaGameMode.h"
 #include "Movement/AuthorityArenaCharacterMovementComponent.h"
 #include "UI/AuthorityArenaHUD.h"
+#include "World/AuthorityArenaWorldBuilder.h"
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(
     FAuthorityArenaHudContractTest,
@@ -26,6 +31,16 @@ bool FAuthorityArenaHudContractTest::RunTest(const FString& Parameters)
         Cast<UAuthorityArenaCharacterMovementComponent>(Character->GetCharacterMovement());
     TestNotNull(TEXT("Character uses correction-counting movement component"), Movement);
     TestEqual(TEXT("Correction count starts at zero"), Movement->GetClientCorrectionCount(), 0u);
+    TestNotNull(TEXT("Character has a C++ identity label"),
+        Character->FindComponentByClass<UTextRenderComponent>());
+    TestNotNull(TEXT("Character has a C++ team-color light"),
+        Character->FindComponentByClass<UPointLightComponent>());
+
+    const AAuthorityArenaWorldBuilder* WorldBuilder = GetDefault<AAuthorityArenaWorldBuilder>();
+    TestNotNull(TEXT("Graybox has programmatic directional light"),
+        WorldBuilder->FindComponentByClass<UDirectionalLightComponent>());
+    TestNotNull(TEXT("Graybox has programmatic skylight"),
+        WorldBuilder->FindComponentByClass<USkyLightComponent>());
     return true;
 }
 

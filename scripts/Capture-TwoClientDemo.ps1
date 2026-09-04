@@ -69,37 +69,26 @@ function Wait-LogMarker {
     throw "Timed out waiting for $($OwnedProcess.Role) marker '$Marker'."
 }
 
-function Wait-MainWindow {
-    param($OwnedProcess, [datetime] $Deadline)
+function Wait-ScreenshotFile {
+    param([string] $Path, [datetime] $Deadline)
     while ([datetime]::UtcNow -lt $Deadline) {
-        $OwnedProcess.Process.Refresh()
-        if ($OwnedProcess.Process.MainWindowHandle -ne [IntPtr]::Zero) {
-            return $OwnedProcess.Process.MainWindowHandle
-        }
-        if ($OwnedProcess.Process.HasExited) {
-            throw "$($OwnedProcess.Role) exited before creating a visible window."
+        if ((Test-Path -LiteralPath $Path -PathType Leaf) -and
+            (Get-Item -LiteralPath $Path).Length -gt 50000) {
+            return
         }
         Start-Sleep -Milliseconds 250
     }
-    throw "Timed out waiting for $($OwnedProcess.Role) window."
+    throw "Timed out waiting for UE viewport screenshot $Path"
 }
 
 Add-Type -AssemblyName System.Drawing
-Add-Type -AssemblyName System.Windows.Forms
-Add-Type -TypeDefinition @'
-using System;
-using System.Runtime.InteropServices;
-public static class AuthorityArenaWindowApi {
-    [DllImport("user32.dll", SetLastError = true)]
-    public static extern bool SetWindowPos(
-        IntPtr hWnd, IntPtr hWndInsertAfter, int X, int Y, int cx, int cy, uint uFlags);
-}
-'@
 
 $owned = [System.Collections.Generic.List[object]]::new()
 $serverLog = Join-Path $runDirectory 'server.log'
 $client1Log = Join-Path $runDirectory 'client1.log'
 $client2Log = Join-Path $runDirectory 'client2.log'
+$client1Viewport = Join-Path $runDirectory 'client1-viewport.png'
+$client2Viewport = Join-Path $runDirectory 'client2-viewport.png'
 $deadline = [datetime]::UtcNow.AddSeconds($TimeoutSeconds)
 $captureSucceeded = $false
 
@@ -119,6 +108,7 @@ try {
     $client1 = Start-OwnedProcess 'Client1' $ue.Editor (@(
         $projectPath, "127.0.0.1:$port`?PlayerId=Client1", '-game', '-d3d11', '-windowed',
         '-ResX=840', '-ResY=560', '-WinX=0', '-WinY=0', '-AuthorityCombat',
+        "-AuthorityScreenshot=$client1Viewport",
         '-AuthorityProcessRole=Client1', "-AuthorityEventLog=$(Join-Path $runDirectory 'client1.jsonl')",
         "-abslog=$client1Log"
     ) + $common)
@@ -127,6 +117,7 @@ try {
     $client2 = Start-OwnedProcess 'Client2' $ue.Editor (@(
         $projectPath, "127.0.0.1:$port`?PlayerId=Client2", '-game', '-d3d11', '-windowed',
         '-ResX=840', '-ResY=560', '-WinX=850', '-WinY=0', '-AuthorityCombat',
+        "-AuthorityScreenshot=$client2Viewport",
         '-AuthorityProcessRole=Client2', "-AuthorityEventLog=$(Join-Path $runDirectory 'client2.jsonl')",
         "-abslog=$client2Log"
     ) + $common)
@@ -135,15 +126,8 @@ try {
     Wait-LogMarker $client1 $client1Log 'local_role=AutonomousProxy' $deadline
     Wait-LogMarker $client2 $client2Log 'local_role=AutonomousProxy' $deadline
     Wait-LogMarker $server $serverLog 'event=PawnRespawned context=AuthorityArenaGameMode_0 player=Client2' $deadline
-
-    $client1Window = Wait-MainWindow $client1 $deadline
-    $client2Window = Wait-MainWindow $client2 $deadline
-    $screen = [System.Windows.Forms.Screen]::PrimaryScreen.Bounds
-    $halfWidth = [Math]::Floor($screen.Width / 2) - 5
-    $captureHeight = [Math]::Min(620, $screen.Height)
-    [AuthorityArenaWindowApi]::SetWindowPos($client1Window, [IntPtr]::Zero, 0, 0, $halfWidth, $captureHeight, 0x0040) | Out-Null
-    [AuthorityArenaWindowApi]::SetWindowPos($client2Window, [IntPtr]::Zero, $halfWidth + 10, 0, $halfWidth, $captureHeight, 0x0040) | Out-Null
-    Start-Sleep -Milliseconds 1500
+    Wait-ScreenshotFile $client1Viewport $deadline
+    Wait-ScreenshotFile $client2Viewport $deadline
 
     $resolvedOutput = [System.IO.Path]::GetFullPath((Join-Path $repositoryRoot $OutputPath))
     $allowedDirectory = [System.IO.Path]::GetFullPath((Join-Path $repositoryRoot 'docs\images')).TrimEnd('\') + '\'
@@ -153,15 +137,23 @@ try {
     if (Test-Path -LiteralPath $resolvedOutput -PathType Leaf) {
         [System.IO.File]::Delete($resolvedOutput)
     }
-    $bitmap = [System.Drawing.Bitmap]::new($screen.Width, $captureHeight)
+    $leftImage = [System.Drawing.Image]::FromFile($client1Viewport)
+    $rightImage = [System.Drawing.Image]::FromFile($client2Viewport)
+    $captureWidth = $leftImage.Width + $rightImage.Width
+    $captureHeight = [Math]::Max($leftImage.Height, $rightImage.Height)
+    $bitmap = [System.Drawing.Bitmap]::new($captureWidth, $captureHeight)
     $graphics = [System.Drawing.Graphics]::FromImage($bitmap)
     try {
-        $graphics.CopyFromScreen($screen.Left, $screen.Top, 0, 0, $bitmap.Size)
+        $graphics.Clear([System.Drawing.Color]::Black)
+        $graphics.DrawImageUnscaled($leftImage, 0, 0)
+        $graphics.DrawImageUnscaled($rightImage, $leftImage.Width, 0)
         $bitmap.Save($resolvedOutput, [System.Drawing.Imaging.ImageFormat]::Png)
     }
     finally {
         $graphics.Dispose()
         $bitmap.Dispose()
+        $leftImage.Dispose()
+        $rightImage.Dispose()
     }
     if ((Get-Item -LiteralPath $resolvedOutput).Length -lt 50000) {
         throw 'Captured screenshot is unexpectedly small.'
@@ -192,7 +184,8 @@ $metadataPath = [System.IO.Path]::ChangeExtension(
     serverPlusClients = 3
     combatRespawnObserved = $true
     ownedProcessLeakCount = 0
-    captureWidth = [System.Windows.Forms.Screen]::PrimaryScreen.Bounds.Width
-    captureHeight = [Math]::Min(620, [System.Windows.Forms.Screen]::PrimaryScreen.Bounds.Height)
+    captureWidth = $captureWidth
+    captureHeight = $captureHeight
+    captureMethod = 'UE viewport screenshots with HUD, composed side-by-side'
 } | ConvertTo-Json | Set-Content -LiteralPath $metadataPath -Encoding utf8NoBOM
 Write-Output "PASS visual-capture image=$([System.IO.Path]::GetFullPath((Join-Path $repositoryRoot $OutputPath))) metadata=$metadataPath"

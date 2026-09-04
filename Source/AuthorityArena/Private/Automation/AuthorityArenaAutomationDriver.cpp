@@ -7,6 +7,7 @@
 #include "Game/AuthorityArenaGameState.h"
 #include "Player/AuthorityArenaPlayerController.h"
 #include "Player/AuthorityArenaPlayerState.h"
+#include "UnrealClient.h"
 
 namespace
 {
@@ -39,6 +40,7 @@ void UAuthorityArenaAutomationDriver::BeginPlay()
     bDashOnly = FParse::Param(FCommandLine::Get(), TEXT("AuthorityDashOnly"));
     bAttackOnly = FParse::Param(FCommandLine::Get(), TEXT("AuthorityAttackOnly"));
     FParse::Value(FCommandLine::Get(), TEXT("AuthorityMoveDuration="), MoveDurationSeconds);
+    FParse::Value(FCommandLine::Get(), TEXT("AuthorityScreenshot="), ScreenshotPath);
     MoveDurationSeconds = FMath::Clamp(MoveDurationSeconds, 0.25f, 10.0f);
 }
 
@@ -132,6 +134,16 @@ void UAuthorityArenaAutomationDriver::TickCombat()
     else if (PlayerId == TEXT("Client2") && bCombat)
     {
         RequestOnce(bShieldRequested, 0.10, AuthorityArenaTags::Ability_Shield, TEXT("Shield"));
+    }
+
+    if (!bScreenshotRequested && !ScreenshotPath.IsEmpty() && ElapsedSeconds >= 7.0)
+    {
+        bScreenshotRequested = true;
+        FScreenshotRequest::RequestScreenshot(ScreenshotPath, true, false, false);
+        UAuthorityArenaNetworkDiagnosticsSubsystem::EmitEvent(
+            this,
+            TEXT("ScreenshotRequested"),
+            FString::Printf(TEXT("player=%s"), *PlayerId));
     }
 }
 

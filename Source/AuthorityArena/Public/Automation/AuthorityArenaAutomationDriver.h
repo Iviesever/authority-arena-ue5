@@ -27,6 +27,7 @@ private:
     double StartTimeSeconds = 0.0;
     float MoveDurationSeconds = 2.0f;
     float ViewSampleAccumulator = 0.0f;
+    FString ScreenshotPath;
     uint32 ViewSequence = 0;
     bool bAutoMove = false;
     bool bCombat = false;
@@ -42,4 +43,5 @@ private:
     bool bAttackTwoRequested = false;
     bool bAttackThreeRequested = false;
     bool bAttackFourRequested = false;
+    bool bScreenshotRequested = false;
 };

@@ -13,6 +13,8 @@ class UAuthorityArenaHealthComponent;
 class UAbilitySystemComponent;
 class USpringArmComponent;
 class UStaticMeshComponent;
+class UPointLightComponent;
+class UTextRenderComponent;
 
 UCLASS()
 class AUTHORITYARENA_API AAuthorityArenaCharacter : public ACharacter, public IAbilitySystemInterface
@@ -49,6 +51,12 @@ private:
 
     UPROPERTY(VisibleAnywhere, Category = "Appearance")
     TObjectPtr<UStaticMeshComponent> BodyMesh;
+
+    UPROPERTY(VisibleAnywhere, Category = "Appearance")
+    TObjectPtr<UTextRenderComponent> PlayerLabel;
+
+    UPROPERTY(VisibleAnywhere, Category = "Appearance")
+    TObjectPtr<UPointLightComponent> PlayerLight;
 
     UPROPERTY(VisibleAnywhere, Category = "Automation")
     TObjectPtr<UAuthorityArenaAutomationDriver> AutomationDriver;
