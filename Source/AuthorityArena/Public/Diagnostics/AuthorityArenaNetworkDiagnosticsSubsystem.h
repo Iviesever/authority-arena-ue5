@@ -12,4 +12,5 @@ class AUTHORITYARENA_API UAuthorityArenaNetworkDiagnosticsSubsystem : public UGa
 public:
     static FString DescribeRole(ENetRole Role);
     static void EmitEvent(const UObject* Context, FName EventName, const FString& Details = FString());
+    static TArray<FString> GetRecentEvents();
 };

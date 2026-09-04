@@ -20,9 +20,10 @@ class AUTHORITYARENA_API AAuthorityArenaCharacter : public ACharacter, public IA
     GENERATED_BODY()
 
 public:
-    AAuthorityArenaCharacter();
+    AAuthorityArenaCharacter(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get());
 
     virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
+    virtual void Tick(float DeltaSeconds) override;
     virtual void PossessedBy(AController* NewController) override;
     virtual void OnRep_PlayerState() override;
     virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
@@ -31,6 +32,7 @@ public:
 
 private:
     void InitializeAbilitySystem();
+    void UpdateAppearance();
     void MoveForward(float Value);
     void MoveRight(float Value);
     void Turn(float Value);
@@ -56,4 +58,6 @@ private:
 
     UPROPERTY(VisibleAnywhere, Category = "Combat")
     TObjectPtr<UAuthorityArenaHealthComponent> HealthComponent;
+
+    bool bAppearanceInitialized = false;
 };

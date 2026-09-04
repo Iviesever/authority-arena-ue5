@@ -4,6 +4,7 @@
 #include "Ability/GA_ProjectileAttack.h"
 #include "Ability/GA_Shield.h"
 #include "Diagnostics/AuthorityArenaNetworkDiagnosticsSubsystem.h"
+#include "GameplayEffect.h"
 
 UAuthorityArenaAbilitySystemComponent::UAuthorityArenaAbilitySystemComponent()
 {
@@ -36,6 +37,21 @@ bool UAuthorityArenaAbilitySystemComponent::TryActivateAbilityByTag(const FGamep
     FGameplayTagContainer Tags;
     Tags.AddTag(AbilityTag);
     return TryActivateAbilitiesByTag(Tags, true);
+}
+
+float UAuthorityArenaAbilitySystemComponent::GetCooldownRemainingForTag(
+    const FGameplayTag CooldownTag) const
+{
+    FGameplayTagContainer Tags;
+    Tags.AddTag(CooldownTag);
+    const TArray<float> Remaining = GetActiveEffectsTimeRemaining(
+        FGameplayEffectQuery::MakeQuery_MatchAnyOwningTags(Tags));
+    float Maximum = 0.0f;
+    for (const float Value : Remaining)
+    {
+        Maximum = FMath::Max(Maximum, Value);
+    }
+    return Maximum;
 }
 
 void UAuthorityArenaAbilitySystemComponent::ArmNextDashRejectionAuthority()

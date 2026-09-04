@@ -15,6 +15,7 @@
 #include "Game/AuthorityArenaGameState.h"
 #include "World/AuthorityArenaWorldBuilder.h"
 #include "TimerManager.h"
+#include "UI/AuthorityArenaHUD.h"
 
 AAuthorityArenaGameMode::AAuthorityArenaGameMode()
 {
@@ -22,6 +23,7 @@ AAuthorityArenaGameMode::AAuthorityArenaGameMode()
     GameStateClass = AAuthorityArenaGameState::StaticClass();
     PlayerControllerClass = AAuthorityArenaPlayerController::StaticClass();
     PlayerStateClass = AAuthorityArenaPlayerState::StaticClass();
+    HUDClass = AAuthorityArenaHUD::StaticClass();
 }
 
 void AAuthorityArenaGameMode::BeginPlay()

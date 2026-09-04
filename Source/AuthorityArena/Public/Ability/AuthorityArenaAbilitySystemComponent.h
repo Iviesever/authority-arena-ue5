@@ -17,6 +17,7 @@ public:
 
     void GrantDefaultAbilities();
     bool TryActivateAbilityByTag(FGameplayTag AbilityTag);
+    float GetCooldownRemainingForTag(FGameplayTag CooldownTag) const;
     void ArmNextDashRejectionAuthority();
     bool ConsumeNextDashRejectionAuthority();
     bool IsDashRejectionArmed() const { return bRejectNextDashAuthority; }

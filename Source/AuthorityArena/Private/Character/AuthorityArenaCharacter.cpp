@@ -12,11 +12,16 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/Controller.h"
 #include "GameFramework/SpringArmComponent.h"
+#include "Materials/MaterialInstanceDynamic.h"
+#include "Movement/AuthorityArenaCharacterMovementComponent.h"
 #include "UObject/ConstructorHelpers.h"
 #include "Player/AuthorityArenaPlayerState.h"
 
-AAuthorityArenaCharacter::AAuthorityArenaCharacter()
+AAuthorityArenaCharacter::AAuthorityArenaCharacter(const FObjectInitializer& ObjectInitializer)
+    : Super(ObjectInitializer.SetDefaultSubobjectClass<UAuthorityArenaCharacterMovementComponent>(
+        ACharacter::CharacterMovementComponentName))
 {
+    PrimaryActorTick.bCanEverTick = true;
     bReplicates = true;
     SetReplicateMovement(true);
 
@@ -57,6 +62,12 @@ AAuthorityArenaCharacter::AAuthorityArenaCharacter()
     AutomationDriver = CreateDefaultSubobject<UAuthorityArenaAutomationDriver>(TEXT("AutomationDriver"));
     CombatComponent = CreateDefaultSubobject<UAuthorityArenaCombatComponent>(TEXT("CombatComponent"));
     HealthComponent = CreateDefaultSubobject<UAuthorityArenaHealthComponent>(TEXT("HealthComponent"));
+}
+
+void AAuthorityArenaCharacter::Tick(const float DeltaSeconds)
+{
+    Super::Tick(DeltaSeconds);
+    UpdateAppearance();
 }
 
 void AAuthorityArenaCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -105,6 +116,30 @@ void AAuthorityArenaCharacter::InitializeAbilitySystem()
     if (HasAuthority())
     {
         AbilitySystem->GrantDefaultAbilities();
+    }
+    UpdateAppearance();
+}
+
+void AAuthorityArenaCharacter::UpdateAppearance()
+{
+    if (bAppearanceInitialized || BodyMesh == nullptr)
+    {
+        return;
+    }
+    const AAuthorityArenaPlayerState* ArenaPlayerState =
+        GetPlayerState<AAuthorityArenaPlayerState>();
+    if (ArenaPlayerState == nullptr || ArenaPlayerState->GetConnectionId().IsEmpty())
+    {
+        return;
+    }
+
+    const FLinearColor PlayerColor = ArenaPlayerState->GetConnectionId() == TEXT("Client1")
+        ? FLinearColor(0.04f, 0.30f, 1.0f, 1.0f)
+        : FLinearColor(1.0f, 0.18f, 0.03f, 1.0f);
+    if (UMaterialInstanceDynamic* Material = BodyMesh->CreateAndSetMaterialInstanceDynamic(0))
+    {
+        Material->SetVectorParameterValue(TEXT("Color"), PlayerColor);
+        bAppearanceInitialized = true;
     }
 }
 

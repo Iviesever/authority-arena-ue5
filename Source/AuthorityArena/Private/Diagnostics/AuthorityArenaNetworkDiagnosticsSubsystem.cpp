@@ -12,11 +12,13 @@
 namespace
 {
 FCriticalSection EventStreamMutex;
+FCriticalSection RecentEventMutex;
 uint64 EventSequence = 0;
 bool bEventStreamInitialized = false;
 FString EventStreamPath;
 FString EventRunId;
 FString EventProcessRole;
+TArray<FString> RecentEvents;
 
 void InitializeEventStream()
 {
@@ -99,5 +101,20 @@ void UAuthorityArenaNetworkDiagnosticsSubsystem::EmitEvent(
         *EventName.ToString(),
         *ContextName,
         *Details);
+    {
+        FScopeLock Lock(&RecentEventMutex);
+        RecentEvents.Add(FString::Printf(TEXT("%s %s"), *EventName.ToString(), *Details));
+        constexpr int32 MaximumRecentEvents = 6;
+        if (RecentEvents.Num() > MaximumRecentEvents)
+        {
+            RecentEvents.RemoveAt(0, RecentEvents.Num() - MaximumRecentEvents, EAllowShrinking::No);
+        }
+    }
     AppendStructuredEvent(ContextName, EventName, Details);
+}
+
+TArray<FString> UAuthorityArenaNetworkDiagnosticsSubsystem::GetRecentEvents()
+{
+    FScopeLock Lock(&RecentEventMutex);
+    return RecentEvents;
 }
