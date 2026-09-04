@@ -11,12 +11,13 @@ Implemented and source-reviewed in this Draft:
 - Native PlayerState/GameState replication, CharacterMovement, GAS Dash/Projectile/Shield, authority rejection, death/respawn/score, C++ HUD, and structured diagnostics.
 - A five-profile network matrix, nine failure scenarios, watchdog cleanup, three-repeat baseline, real two-client screenshot, and technical diagrams.
 - Shipping and Development BuildCookRun archives with Cook/Stage/Pak/IoStore/Archive, payload hashes, real packaged startup, and Development packaged two-client Combat.
+- Audit-fix evidence: real GAS invalid-target and four-request Flood paths, four final server/client state comparisons in every Combat profile, and source-bound watchdog identities.
+
+Final local delivery source: `eb03f031131d709b74a91a7f0c17216433e06b92`. Shipping package fingerprint: `1C383D2B835CA22E3E6E4C25D8078940123C74A26A895C0674447713C0DF0889` (679,627,218 total bytes). Development fingerprint: `5AC90E49C422D1A35102EC9305A38F2DFE31726FA7E243D1AA5FB9BE97E40B48` (1,037,353,813 total bytes). Both were produced from the exact detached clean-source commit; packaged Combat has matching report/package source SHA and final consistency 4/4.
 
 Still required before Ready/merge:
 
-- Commit and push the complete portfolio/AI/interview documentation.
-- Run the exact committed source through clean-clone MQB, UBT, Automation, Editor Combat, Shipping package smoke, and Development packaged two-client Combat.
-- Run a current-SHA full local matrix, obtain green GitHub source-contract CI, and complete a fresh independent read-only audit with no Blocker/High.
+- Obtain green GitHub source-contract CI for the final evidence commit and complete the second independent read-only audit with no Blocker/High.
 - Only then mark Ready, merge normally, create the annotated tag, and publish a source-only Release whose custom `assets` array is empty.
 
 No binary or packaged artifact will be attached to the Release. If any P0 gate remains unproven, this PR stays Draft and the project remains Alpha/WIP.

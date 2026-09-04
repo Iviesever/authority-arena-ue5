@@ -52,6 +52,7 @@ The PowerShell runner creates one bounded run directory and three process identi
 - [Architecture](docs/ARCHITECTURE.md), [network model](docs/NETWORK_MODEL.md), and [GAS design](docs/GAS_DESIGN.md)
 - [Real multi-process runner](scripts/RunMultiplayerScenario.ps1)
 - [Sanitized network matrix](docs/examples/network-matrix.json) and [failure matrix](docs/examples/failure-matrix.json)
+- [Final audit-fix E2E and package summary](docs/examples/final-e2e-evidence.json)
 - [Build and package boundary](docs/BUILD_SYSTEM.md)
 - [AI assistance disclosure](docs/AI_ASSISTANCE.md)
 

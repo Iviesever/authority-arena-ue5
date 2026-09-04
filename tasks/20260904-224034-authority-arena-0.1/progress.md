@@ -362,3 +362,12 @@ Result: exit `1` at missing `CoreMinimal.h`. MQB does not reconstruct `.uproject
 - Failure matrix 9/9 passed. Real target run `97a91235` and real GAS Flood run `83735311` passed. Three repeated baselines `d48cac0b`, `f584ca93`, `76ee9233` passed. Enhanced watchdog `63545926` and runner-contract watchdog `20e5625f` recorded exact source/dirty/UTC/role-PIDs and leak 0.
 - Exact-SHA clean clone rebuilt MQB and all three UBT targets, passed Automation and Editor Combat `094550ec`, then built/verified/ran the Shipping package. Shipping game EXE SHA-256 `C793E948494FBABAFF3DE9EE9184C27BFE4EB92153AC44F9728EE3F11444D551`; package fingerprint `B2F1130B5CF0062AEE0A9FFB8E4A06717D192417F42BA60BCBD95B1F4F503A7E`.
 - The immediately following Development UAT hit `ConflictingInstance` before Build because the global UBT mutex had not finished teardown. `Package-Win64.ps1` now retries exactly once after 3 seconds only when the captured UAT log explicitly contains `ConflictingInstance`; all other failures remain fail-fast. A new exact-SHA clean run is required.
+
+## 2026-09-05 04:56 UTC+8 — Final exact-source clean delivery after audit fixes
+
+- Final delivery source `eb03f031131d709b74a91a7f0c17216433e06b92` cloned detached to `Artifacts/clean-checkout/eb03f031-20260905-044828`; goal hash exact, Git clean, no generated state copied.
+- Fresh MQB 41, Editor Development, Game Development, Game Shipping, Automation 3/3 and Editor Combat `6b38083cf8814d689259840a0fef1dfa` all passed. Editor Combat contains final consistency 4/4.
+- Shipping UAT succeeded first attempt through Build/Cook/Stage/Pak/IoStore/Archive. 679,627,218 total bytes; game EXE SHA-256 `3BCB342B3286DB9481B07713BC54F41D2C9FD6115BF111C8B43DCD57E694714F`; package fingerprint `1C383D2B835CA22E3E6E4C25D8078940123C74A26A895C0674447713C0DF0889`. Headless and interactive run `190f4e2f7ba44c02bb89be8f620b4793` passed by direct game-EXE ownership.
+- Development UAT also succeeded first attempt. 1,037,353,813 total bytes; game EXE SHA-256 `D3DF311ED9BF6159F641EFCFE96E004D633F730F9EACE782C206D9659CDC8240`; package fingerprint `5AC90E49C422D1A35102EC9305A38F2DFE31726FA7E243D1AA5FB9BE97E40B48`.
+- Packaged Combat `537df6c50af34aba88a12ecf5f1ce8c7`: report source SHA and package source SHA both exact `eb03f031`; three exit-0 processes, full Combat, final consistency 4/4. Clean-source report records owned survivors 0.
+- All first-audit findings now have clean evidence. A second independent audit and final CI remain before release.
