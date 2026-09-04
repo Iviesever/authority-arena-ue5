@@ -92,7 +92,8 @@ $packagedSmoke = Get-Content -LiteralPath (Join-Path $repositoryRoot 'scripts\Ru
 foreach ($requiredPackagedSmokeContract in @(
     '[switch] $Interactive',
     "'-d3d11'",
-    "@('ServerReady', 'ArenaReady')"
+    "@('ServerReady', 'ArenaReady')",
+    '$startInfo.FileName = $manifest.gameExecutable'
 )) {
     if (-not $packagedSmoke.Contains($requiredPackagedSmokeContract, [StringComparison]::Ordinal)) {
         throw "Packaged smoke runner is missing contract '$requiredPackagedSmokeContract'."

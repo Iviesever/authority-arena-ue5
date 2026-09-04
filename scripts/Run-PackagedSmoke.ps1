@@ -24,7 +24,7 @@ $reportPath = Join-Path $artifactDirectory 'packaged-smoke-report.json'
 $startedUtc = [datetime]::UtcNow
 
 $startInfo = [System.Diagnostics.ProcessStartInfo]::new()
-$startInfo.FileName = $manifest.mainExecutable
+$startInfo.FileName = $manifest.gameExecutable
 $startInfo.UseShellExecute = $false
 $launchArguments = @(
     "-AuthorityRunId=$runId", "-AuthorityProcessRole=$processRole",
@@ -41,7 +41,7 @@ foreach ($argument in $launchArguments) {
 $process = [System.Diagnostics.Process]::Start($startInfo)
 $ownedId = $process.Id
 $ownedStartTime = $process.StartTime
-$ownedPath = [System.IO.Path]::GetFullPath($manifest.mainExecutable)
+$ownedPath = [System.IO.Path]::GetFullPath($manifest.gameExecutable)
 try {
     if (-not $process.WaitForExit($TimeoutSeconds * 1000)) {
         throw "Packaged smoke timed out for PID $ownedId."
@@ -104,4 +104,4 @@ $report = [ordered]@{
     eventStream = $eventPath
 }
 $report | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath $reportPath -Encoding utf8NoBOM
-Write-Output "PASS packaged-smoke mode=$mode exe=$($manifest.mainExecutable) report=$reportPath"
+Write-Output "PASS packaged-smoke mode=$mode exe=$($manifest.gameExecutable) report=$reportPath"

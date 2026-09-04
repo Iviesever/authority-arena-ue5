@@ -334,3 +334,13 @@ Result: exit `1` at missing `CoreMinimal.h`. MQB does not reconstruct `.uproject
 - Clean Shipping package: all stages true; 679,588,078 total bytes; game EXE SHA-256 `43D463E0494DFD66A600532BFE40DF3D2805472D09B6BE08CB7C039D341B7C33`; payload fingerprint `0EC9AB311007BB018E99115DF3DFA1438115B85773D3982E5DF845F431604BEF`; headless packaged run `f5254a4164fd4b9192ace5882e2c0620` passed.
 - Clean Development package: all stages true; 1,037,313,879 total bytes; game EXE SHA-256 `D2C4CCF947CACD342D190809E14EEB65893CB853CBC2669FEE399EA0EBDAE790`; payload fingerprint `968E8C11FEE1DE183B8D133F00EBB8A688AE0F13F90D62514E4D9FBF093184E0`; packaged Combat run `5472e7fbbbf64bef9e454675b419f982` passed.
 - `clean-source-report.json` records dirty=false and owned process survivors 0. PACT-60 complete; final current-SHA matrix and independent audit remain before release.
+
+## 2026-09-05 03:40 UTC+8 — Current-SHA full matrix and packaged PID fix
+
+- Current source `d3fbb828f62d706c6ecee50cdadc70a61c31ff81`: contracts, project structure, documentation, MQB 41, Editor Development, Game Development, Game Shipping, Automation 3/3, headless and D3D11 interactive smoke all passed.
+- Five current-source Combat profiles passed: Baseline `bf3cf999`, Lag60 `00b1f97d`, Lag120 `d9b477a1`, Jitter `633bdfdf`, Loss `6da7e82a`.
+- Nine current-source failure scenarios passed: ClientDisconnect, ServerShutdown, SecondClientConnectFail, DashRejected, AuthorityAbuse, AttackFlood, DeadAbility, DuplicateRespawn and watchdog. Three further ConnectionMovement repeats used run IDs `0c7dc110`, `c03d74da`, `1c0d068e`; invalid-profile/watchdog runner contracts passed.
+- GitHub source-contract CI reported SUCCESS for push and PR. All 16 normal/expected-fault reports in the final batch had exact source SHA, dirty=false and no mismatches.
+- Process audit found one old `0cf20c0` Shipping child (PID 31620, parent was the first failed bootstrap PID 36448). Its command line proved it belonged to this repository's obsolete `-ExecCmds=quit` smoke. It was stopped only after exact absolute package path verification.
+- RED regression contract required packaged smoke to start `$manifest.gameExecutable`. Both packaged runners now launch the configuration-specific game EXE directly, so the same PID/start/path identity is tested and cleaned.
+- Direct Shipping headless smoke run `20d42cae` and direct Development packaged Combat run `3d370852` passed against the clean `568b57e` packages. A post-run scan found zero AuthorityArena UE processes.

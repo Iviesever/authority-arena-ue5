@@ -44,6 +44,8 @@ pwsh -NoProfile -File .\scripts\Test-Watchdog.ps1
 
 Every normal report requires three distinct exit-zero processes and three valid event streams. JSONL rows must carry schema 1, exact runId/processRole, and strictly increasing sequence. Functional fields decide pass/fail. Wall-clock duration, packet settings, ping, loss, and correction counts are observations, never deterministic benchmark claims.
 
+Packaged runners use `gameExecutable`, not the root bootstrap. A historical test that owned only the bootstrap left its child Shipping game alive; the exact old PID/path was identified and removed, then direct-game smoke/Combat runs proved zero survivors. This regression is locked by `Test-ProjectStructure.ps1`.
+
 ## Packaged checks
 
 Shipping is used for the release-like archive and real headless/interactive startup. UE Shipping Game builds intentionally clear command-line map/URL overrides unless the engine is rebuilt with `UE_ALLOW_MAP_OVERRIDE_IN_SHIPPING=1`; the project does not weaken that engine security default. The packaged two-client test therefore uses a Development archive. Its explicit automation-only flag removes the ListenServer host Pawn so only Client1 and Client2 participate in combat.

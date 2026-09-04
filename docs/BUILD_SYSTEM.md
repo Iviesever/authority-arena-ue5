@@ -85,6 +85,8 @@ Headless Editor-Cmd and visible Editor game processes both loaded `/Engine/Maps/
 
 `Package-Win64.ps1` refuses a dirty worktree, runs MQB Core first, and invokes RunUAT with Build/Cook/Stage/Pak/IoStore/Archive. `Verify-PackagedBuild.ps1` rechecks stage booleans, the bootstrap and configuration-specific game EXE, every `.exe/.dll/.pak/.utoc/.ucas` byte count and SHA-256, payload byte total, and an aggregate sorted package fingerprint.
 
+Runtime scripts launch the manifest's configuration-specific `gameExecutable` directly. Holding the root bootstrap PID is insufficient because the bootstrap can create a child game process and exit; direct launch makes the process whose readiness/exit is asserted the same PID/start-time/path identity that cleanup owns.
+
 Both Shipping and Development archives are local-only. Shipping proves the release configuration and real headless/interactive startup. UE 5.8 `GameInstance.cpp` defines `UE_ALLOW_MAP_OVERRIDE_IN_SHIPPING=0`, so a Shipping Game build clears command-line map/connection URLs. Packaged server-plus-two-client automation deliberately uses Development and reports that configuration in JSON; it does not weaken the engine-wide Shipping policy.
 
 RunUAT can start Zen with the Cook process as owner and later sponsor it for Stage. One retained run lost Zen between Cook and Stage and failed; a new-directory rerun exercised `-StartZenServerForStage` and succeeded. Failed archive directories remain ignored evidence and are never overwritten.

@@ -35,7 +35,7 @@ if ($Build -eq 'Packaged') {
     if ($package.configuration -ne 'Development') {
         throw 'Packaged multi-process validation requires a Development package because UE Shipping Game builds disable command-line map/URL overrides (UE_ALLOW_MAP_OVERRIDE_IN_SHIPPING=0).'
     }
-    $processExecutable = $package.mainExecutable
+    $processExecutable = $package.gameExecutable
     $processPrefixArguments = @()
     $packageExecutableSha256 = $package.mainExecutableSha256
     $gameExecutableSha256 = $package.gameExecutableSha256
