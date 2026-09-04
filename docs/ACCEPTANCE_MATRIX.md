@@ -10,11 +10,11 @@ Statuses are `NOT RUN`, `RED`, `PASS`, `FAIL`, or `N/A` with a reason. `PASS` re
 | PRE-04 | UE 5.8, VS/MSVC, Windows SDK, pwsh, MQB, Git discovered | PASS | UE 5.8.0 CL 55116800; MSVC 14.51; SDK 26100; pwsh 7.6; MQB 5.4; Git 2.51 |
 | PRE-05 | Related process inventory captured without interference | PASS | No matching UE/UBT/UAT/Shader/Cook/Package/test process at audit time |
 | PACT-00.01 | Public GitHub repository | PASS | `gh repo view`: `Iviesever/authority-arena-ue5`, `PUBLIC`, initially empty |
-| PACT-00.02 | Minimal UE 5.8 C++ project opens in Editor | NOT RUN | — |
-| PACT-00.03 | Development Editor build | NOT RUN | — |
-| PACT-00.04 | Development Game build | NOT RUN | — |
-| PACT-00.05 | Shipping Game build | NOT RUN | — |
-| PACT-00.06 | Programmatic graybox requires no manual Editor clicks | NOT RUN | — |
+| PACT-00.02 | Minimal UE 5.8 C++ project opens in Editor | PASS | Headless and visible smoke loaded `/Engine/Maps/Entry` with `AuthorityArenaGameMode` |
+| PACT-00.03 | Development Editor build | PASS | UBT `AuthorityArenaEditor Win64 Development`, final exit 0 |
+| PACT-00.04 | Development Game build | PASS | UBT `AuthorityArena Win64 Development`, current-source final exit 0 |
+| PACT-00.05 | Shipping Game build | PASS | UBT `AuthorityArena Win64 Shipping`, current-source final exit 0 |
+| PACT-00.06 | Programmatic graybox requires no manual Editor clicks | PASS | Both smoke logs contain `AA_EVENT ArenaReady blocks=6`; C++ default subcomponents use Engine BasicShapes |
 | PACT-00.07 | Build/test scripts and governance contracts | PASS | RED exit 1 when verifier absent; GREEN `PASS contracts ... files=12` on 2026-09-04 |
 | PACT-00.08 | Real `main` baseline pushed | NOT RUN | — |
 | PACT-00.09 | Feature branch from real `origin/main` | NOT RUN | — |

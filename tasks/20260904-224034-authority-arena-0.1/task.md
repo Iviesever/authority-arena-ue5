@@ -95,7 +95,7 @@ pwsh -NoProfile -File .\scripts\Verify-Contracts.ps1
 
 预期：`PASS contracts`。
 
-- [ ] **Step 6：提交并推送真实 main 基线**
+- [x] **Step 6：提交并推送真实 main 基线**
 
 ```powershell
 git add AGENTS.md .agents .gitignore docs tasks scripts/Verify-Contracts.ps1
@@ -120,7 +120,7 @@ git ls-remote origin refs/heads/main
 - 创建：`Source/AuthorityArenaCore/Private/AuthorityRules.cpp`
 - 创建：`Source/AuthorityArenaCore/Private/NetworkScenario.cpp`
 - 创建：`Source/AuthorityArenaCore/Private/ReportModel.cpp`
-- 创建：`Source/AuthorityArenaCore/Tests/AuthorityArenaCoreTests.cpp`
+- 创建：`Tests/AuthorityArenaCoreTests.cpp`（位于 UE 模块目录外，避免 UBT 收集独立 `main`）
 - 创建：`scripts/Test-Core.ps1`
 - 创建：`docs/BUILD_SYSTEM.md`
 
@@ -146,31 +146,31 @@ NetworkScenario ParseScenarioName(std::string_view);
 ConsistencyResult CompareSnapshots(const FinalSnapshot&, const FinalSnapshot&) noexcept;
 ```
 
-- [ ] **Step 1：编写失败的纯 C++ 测试**
+- [x] **Step 1：编写失败的纯 C++ 测试**
 
 测试至少逐项断言：允许请求、非 owner、死亡、眩晕、能量不足、冷却边界、攻击频率边界、空/死亡/越距目标、重复重生；解析 `baseline/lag60/lag120/jitter/loss`；客户端/服务端快照不一致必须失败。
 
-- [ ] **Step 2：用 MQB 观察 RED**
+- [x] **Step 2：用 MQB 观察 RED**
 
 ```powershell
-mqb run Source/AuthorityArenaCore/Tests/AuthorityArenaCoreTests.cpp `
+mqb run Tests/AuthorityArenaCoreTests.cpp `
   Source/AuthorityArenaCore/Private/AuthorityRules.cpp `
   Source/AuthorityArenaCore/Private/NetworkScenario.cpp `
   Source/AuthorityArenaCore/Private/ReportModel.cpp `
-  /I Source/AuthorityArenaCore/Public --std 20 /W4 /WX
+  /ISource/AuthorityArenaCore/Public --std 20 /WX
 ```
 
 预期：因接口/实现缺失而编译或链接失败；保存精确输出。
 
-- [ ] **Step 3：实现最小规则核心**
+- [x] **Step 3：实现最小规则核心**
 
 实现必须纯函数优先、无全局时钟、无 Unreal 类型、无异常依赖。校验顺序固定，确保非法请求在状态变化前得到稳定拒绝码。
 
-- [ ] **Step 4：验证 MQB GREEN 与增量构建**
+- [x] **Step 4：验证 MQB GREEN 与增量构建**
 
-连续两次运行 Step 2 命令，第二次附加 `--timings=json`；预期测试进程返回 0、无 warning，第二次显示可解释的 cache/incremental 行为。记录 MQB 版本从 `mqb --help` 首行取得，因为 `--version` 实测不受支持。
+连续两次运行 Step 2 命令，第二次附加 `--timings=json`；预期测试进程返回 0、无 warning，第二次显示可解释的 cache/incremental 行为。MQB 5.4 自有默认 `/W3`，因此使用 `/WX` 而不额外覆盖为 `/W4`，避免 MSVC `D9025` 命令行警告。记录 MQB 版本从 `mqb --help` 首行取得，因为 `--version` 实测不受支持。
 
-- [ ] **Step 5：有边界地探测 MQB 的 UE 能力**
+- [x] **Step 5：有边界地探测 MQB 的 UE 能力**
 
 在 UE 模块最小源文件产生后仅执行一次代表性 `mqb build`，验证 UHT generated header、Engine include、宏和链接语义。若失败，保存命令与第一根因，不循环伪造 include 参数；在 `BUILD_SYSTEM.md` 划定 MQB 负责 Core、UBT 负责 UE Target/UHT、RunUAT 负责 Cook/Package。
 
@@ -215,15 +215,15 @@ git push
 - `AAuthorityArenaGameMode::ChooseSpawnTransform(int32 PlayerIndex) const` 返回固定出生点。
 - `AAuthorityArenaWorldBuilder` 的 C++ 默认子组件构建 floor/四墙/中心标记。
 
-- [ ] **Step 1：编写 PACT-00 RED 检查**
+- [x] **Step 1：编写 PACT-00 RED 检查**
 
 `scripts/Test-ProjectStructure.ps1` 检查 `.uproject` EngineAssociation `5.8`、目标文件、模块依赖、默认 map/GameMode、禁止蓝图权威逻辑和 required C++ 类型。首次运行应因项目文件缺失而失败。
 
-- [ ] **Step 2：创建最小项目和 C++ 类型**
+- [x] **Step 2：创建最小项目和 C++ 类型**
 
 `.uproject` 启用 `GameplayAbilities`、`GameplayTags`、`GameplayTasks`；主模块依赖 `AuthorityArenaCore`。Character 构造 Capsule、CharacterMovement、SpringArm、Camera 与可着色 BasicShape；GameMode 生成 WorldBuilder 与 Pawn，不依赖 Editor 点击。
 
-- [ ] **Step 3：验证 Editor 构建**
+- [x] **Step 3：验证 Editor 构建**
 
 ```powershell
 & 'D:\program\UnrealEngine\Epic Games\UE_5.8\Engine\Build\BatchFiles\Build.bat' `
@@ -233,7 +233,7 @@ git push
 
 预期：exit 0，`Binaries/Win64/UnrealEditor-AuthorityArena.dll` 存在。
 
-- [ ] **Step 4：无头打开与普通可交互启动**
+- [x] **Step 4：无头打开与普通可交互启动**
 
 ```powershell
 & 'D:\program\UnrealEngine\Epic Games\UE_5.8\Engine\Binaries\Win64\UnrealEditor-Cmd.exe' `
@@ -243,11 +243,11 @@ git push
 
 然后以可见窗口启动 `UnrealEditor.exe .\AuthorityArena.uproject -game -windowed -ResX=960 -ResY=540`，等待 Ready marker 后只结束记录的该 PID。预期两者均无 fatal/crash。
 
-- [ ] **Step 5：构建 Development Game 与 Shipping Game**
+- [x] **Step 5：构建 Development Game 与 Shipping Game**
 
 运行 `Build.ps1 -Target Game -Configuration Development` 和 `Build.ps1 -Target Game -Configuration Shipping`；预期各自 exit 0。
 
-- [ ] **Step 6：探测 Dedicated Server target**
+- [x] **Step 6：探测 Dedicated Server target**
 
 运行 `Build.ps1 -Target Server -Configuration Development`。成功则将 Server target 作为后续首选；若 Launcher engine 报 distribution 不支持 Server target，保存精确日志并锁定 `Game -server -nullrhi` 替代路径，不把失败写成通过。
 
