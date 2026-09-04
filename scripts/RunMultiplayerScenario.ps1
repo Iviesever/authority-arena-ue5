@@ -74,15 +74,34 @@ function Wait-LogMarkers {
     )
 
     while ([datetime]::UtcNow -lt $Deadline) {
-        if ($OwnedProcess.Process.HasExited) {
-            throw "$($OwnedProcess.Role) exited $($OwnedProcess.Process.ExitCode) before markers '$($Markers -join ', ')'; see $LogPath"
-        }
         if (Test-Path -LiteralPath $LogPath -PathType Leaf) {
-            $text = Get-Content -LiteralPath $LogPath -Raw
+            $text = $null
+            $stream = $null
+            $reader = $null
+            try {
+                $stream = [System.IO.FileStream]::new(
+                    $LogPath,
+                    [System.IO.FileMode]::Open,
+                    [System.IO.FileAccess]::Read,
+                    [System.IO.FileShare]::ReadWrite -bor [System.IO.FileShare]::Delete)
+                $reader = [System.IO.StreamReader]::new($stream)
+                $text = $reader.ReadToEnd()
+            }
+            catch [System.IO.IOException] {
+                $text = $null
+            }
+            finally {
+                if ($null -ne $reader) {
+                    $reader.Dispose()
+                }
+                elseif ($null -ne $stream) {
+                    $stream.Dispose()
+                }
+            }
             if (-not [string]::IsNullOrEmpty($text)) {
                 $allPresent = $true
                 foreach ($marker in $Markers) {
-                    if (-not $text.Contains($marker, [StringComparison]::Ordinal)) {
+                    if ($text.IndexOf($marker, [StringComparison]::Ordinal) -lt 0) {
                         $allPresent = $false
                         break
                     }
@@ -91,6 +110,9 @@ function Wait-LogMarkers {
                     return
                 }
             }
+        }
+        if ($OwnedProcess.Process.HasExited) {
+            throw "$($OwnedProcess.Role) exited $($OwnedProcess.Process.ExitCode) before markers '$($Markers -join ', ')'; see $LogPath"
         }
         Start-Sleep -Milliseconds 250
     }
