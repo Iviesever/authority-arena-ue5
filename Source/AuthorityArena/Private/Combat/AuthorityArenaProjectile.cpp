@@ -66,7 +66,7 @@ void AAuthorityArenaProjectile::MulticastImpact_Implementation(const FVector_Net
     {
         GEngine->AddOnScreenDebugMessage(
             -1,
-            1.25f,
+            2.5f,
             FColor(255, 178, 48),
             TEXT("PROJECTILE HIT // SERVER CONFIRMED"));
     }
@@ -111,9 +111,11 @@ void AAuthorityArenaProjectile::OnSphereOverlap(
         return;
     }
     SourceAbilitySystem->ApplyGameplayEffectSpecToTarget(*Spec.Data.Get(), TargetAbilitySystem);
+    Collision->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+    Movement->StopMovementImmediately();
     const FVector ImpactLocation = SweepResult.bBlockingHit
         ? FVector(SweepResult.ImpactPoint)
         : GetActorLocation();
     MulticastImpact(FVector_NetQuantize(ImpactLocation));
-    Destroy();
+    SetLifeSpan(0.25f);
 }
