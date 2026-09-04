@@ -133,3 +133,10 @@ Result: exit `1` at missing `CoreMinimal.h`. MQB does not reconstruct `.uproject
 - Created `feat/authority-arena-0.1` from that exact remote-tracking commit and pushed it.
 - First Draft PR command failed with GitHub GraphQL `No commits between main and feat/authority-arena-0.1`, because a branch at the identical baseline has no reviewable diff.
 - Corrective action: commit this factual feature-branch kickoff/evidence update, push it, then repeat Draft PR creation.
+
+## 2026-09-04 23:28 UTC+8 — Draft PR created
+
+- Feature kickoff commit: `0940d5636c52a98ed436b0841bb7f355230f6b25`.
+- Draft PR: `https://github.com/Iviesever/authority-arena-ue5/pull/1`.
+- `gh pr view 1` verified `state=OPEN`, `isDraft=true`, base `main`, head `feat/authority-arena-0.1`, and `mergeStateStatus=CLEAN`.
+- PACT-00 is complete. Complex GAS work remains prohibited until this checkpoint; PACT-10 network foundations are next.

@@ -251,7 +251,7 @@ git push
 
 运行 `Build.ps1 -Target Server -Configuration Development`。成功则将 Server target 作为后续首选；若 Launcher engine 报 distribution 不支持 Server target，保存精确日志并锁定 `Game -server -nullrhi` 替代路径，不把失败写成通过。
 
-- [ ] **Step 7：PACT-00 GREEN、基线提交与功能分支**
+- [x] **Step 7：PACT-00 GREEN、基线提交与功能分支**
 
 运行结构检查、Core tests、三个可用 target、headless/interactive smoke；更新矩阵。提交到 `main` 并推送后，从真实 `origin/main` 创建：
 

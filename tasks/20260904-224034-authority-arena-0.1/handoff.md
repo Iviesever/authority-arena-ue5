@@ -2,7 +2,7 @@
 
 ## Current state
 
-- Active phase: PACT-00 is locally green and on `main`; `feat/authority-arena-0.1` exists from the verified baseline. Draft PR creation awaits the first feature-branch evidence commit.
+- Active phase: PACT-00 complete; PACT-10 network foundations begin on the feature branch.
 - Release eligibility: not eligible; no project build or P0 runtime verification has passed.
 - Remote repository: public `https://github.com/Iviesever/authority-arena-ue5`; `main` contains governance commit `acacf93d37dd246161b8b397c499b93acc031a68`.
 - Local repository: current branch `feat/authority-arena-0.1` tracks its same-name origin branch; it was created from `origin/main` at `e35df954166ff558b824ce41386c26a68f684d24`.
@@ -18,7 +18,7 @@
 
 ## Next exact action
 
-Commit this feature-branch kickoff, create the Draft PR, then begin PACT-10 network tests.
+Write and observe failing PACT-10 replication/ownership tests before implementing GameState, PlayerState, PlayerController, and diagnostics.
 
 ## Safety boundary
 
