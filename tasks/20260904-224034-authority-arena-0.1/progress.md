@@ -169,3 +169,13 @@ Result: exit `1` at missing `CoreMinimal.h`. MQB does not reconstruct `.uproject
 - Server evidence: `PawnDestroyed player=Client2` once, `PawnRespawned player=Client2` once, an intermediate snapshot count 1, then a post-respawn authority snapshot count 2.
 - Client2 emitted `RespawnRequested`; all three processes observed `MatchPulse`; both clients disconnected; no related process remained.
 - This run was dirty development evidence. A clean-commit Automation + ConnectionMovement + Lifecycle matrix remains required.
+
+## 2026-09-05 00:05 UTC+8 — PACT-10 final clean matrix
+
+- Source commit: `15e800be0f02f557e89f98d764a8ba55aa08e6ee`.
+- UE Automation: `AuthorityArena.Network`, exactly 1 test, succeeded 1, failed/not-run/in-process 0.
+- ConnectionMovement: run `b26c8b94d56a4e2e9c70ade8cfc4b523`, port 49720, dirty=false, three distinct exit-0 processes, 2 players, Authority/AutonomousProxy/SimulatedProxy, authoritative movement and two disconnect events.
+- Lifecycle: run `5ddac07d6b1c4869beee9a5a1a108d6f`, port 60979, dirty=false, presentation multicast on all processes, one Client2 Pawn destroy, one reliable respawn request, one respawn, post-respawn authority count 2, two disconnect events.
+- Both client logs had zero standalone fallback. Final related-process inventory was empty.
+- Sanitized evidence: `docs/examples/pact10-connection-report.json` and `docs/examples/pact10-lifecycle-report.json`.
+- PACT-10 complete; PACT-20 native GAS is next.

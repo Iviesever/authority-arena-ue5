@@ -306,11 +306,11 @@ UnrealEditor-Cmd.exe AuthorityArena.uproject -unattended -nullrhi `
 
 重复 Step 1，预期全部 `AuthorityArena.Network` 通过且进程 exit 0。
 
-- [ ] **Step 4：真实 server + two clients 连接/移动证据**
+- [x] **Step 4：真实 server + two clients 连接/移动证据**
 
 先实现最小 `RunMultiplayerScenario.ps1 -Scenario ConnectionMovement`，使用唯一端口启动一个 server 和两个独立 client；验证三个不同 PID、两个连接 ID、每个客户端均看到 Autonomous + Simulated Proxy、权威位置一致、断开后引用清理。
 
-- [ ] **Step 5：更新证据并提交**
+- [x] **Step 5：更新证据并提交**
 
 保存精简 `docs/examples/pact10-connection-report.json` 和真实日志路径（忽略）；更新 `NETWORK_MODEL.md`、矩阵、progress，提交 `feat: add native multiplayer replication foundation` 并 push。
 

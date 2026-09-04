@@ -19,14 +19,14 @@ Statuses are `NOT RUN`, `RED`, `PASS`, `FAIL`, or `N/A` with a reason. `PASS` re
 | PACT-00.08 | Real `main` baseline pushed | PASS | Source commit `249ed563e6c84bbca24d191d6c049eb53ab94163`; local and `origin/main` matched |
 | PACT-00.09 | Feature branch from real `origin/main` | PASS | `feat/authority-arena-0.1` created from `origin/main` at `e35df954166ff558b824ce41386c26a68f684d24` and pushed |
 | PACT-00.10 | Draft PR and factual progress | PASS | Draft PR #1, base `main`, head `feat/authority-arena-0.1`, verified `isDraft=true`, `CLEAN` |
-| PACT-10.01 | One server and two independent clients | NOT RUN | — |
-| PACT-10.02 | CharacterMovement replicated across real processes | NOT RUN | — |
-| PACT-10.03 | Authority/Autonomous/Simulated roles observed | NOT RUN | — |
-| PACT-10.04 | PlayerState identity/score/deaths ownership | NOT RUN | — |
-| PACT-10.05 | GameState match phase/time/round state | NOT RUN | — |
-| PACT-10.06 | Replicated properties and RepNotify | NOT RUN | — |
-| PACT-10.07 | Reliable Server RPC, bounded unreliable RPC, Client RPC, presentation Multicast | NOT RUN | — |
-| PACT-10.08 | Destroy/respawn/disconnect leaves no dangling reference | NOT RUN | — |
+| PACT-10.01 | One server and two independent clients | PASS | Clean SHA `15e800b`; both reports show 3 distinct exit-0 processes and 2 connections |
+| PACT-10.02 | CharacterMovement replicated across real processes | PASS | Connection report authority X values moved >100 uu from configured spawns |
+| PACT-10.03 | Authority/Autonomous/Simulated roles observed | PASS | Server/client logs plus compact connection report |
+| PACT-10.04 | PlayerState identity/score/deaths ownership | PASS | UE reflection Automation plus real `Client1`/`Client2` PlayerState identity logs |
+| PACT-10.05 | GameState match phase/time/round state | PASS | RepNotify reflection covers phase/time/round/run ID; server/client match events observed |
+| PACT-10.06 | Replicated properties and RepNotify | PASS | `AuthorityArena.Network.ReplicationContract`, succeeded 1, failed 0 |
+| PACT-10.07 | Reliable Server RPC, bounded unreliable RPC, Client RPC, presentation Multicast | PASS | UHT flag reflection + Lifecycle `MatchPulse` on all three processes |
+| PACT-10.08 | Destroy/respawn/disconnect leaves no dangling reference | PASS | Lifecycle report: one destroy/one respawn/count 2/two disconnects/zero process leaks |
 | PACT-20.01 | Predicted GAS Dash with cost/cooldown/confirmation/rejection | NOT RUN | — |
 | PACT-20.02 | Server-spawned projectile and GameplayEffect damage | NOT RUN | — |
 | PACT-20.03 | GAS Tag/Effect Shield with energy and damage reduction | NOT RUN | — |

@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "runId": "5ddac07d6b1c4869beee9a5a1a108d6f",
+  "scenario": "Lifecycle",
+  "sourceSha": "15e800be0f02f557e89f98d764a8ba55aa08e6ee",
+  "workingTreeDirty": false,
+  "result": "PASS",
+  "processes": {
+    "distinct": 3,
+    "allExitZero": true,
+    "roles": ["Server", "Client1", "Client2"]
+  },
+  "assertions": {
+    "connectedPlayers": 2,
+    "presentationMulticastObservedOnAllProcesses": true,
+    "client2PawnDestroyedExactlyOnce": true,
+    "client2ReliableRespawnRequestObserved": true,
+    "client2PawnRespawnedExactlyOnce": true,
+    "postRespawnAuthorityPawnCount": 2,
+    "bothDisconnectedCleanly": true,
+    "standaloneFallbackObserved": false,
+    "ownedProcessLeakCount": 0
+  }
+}
