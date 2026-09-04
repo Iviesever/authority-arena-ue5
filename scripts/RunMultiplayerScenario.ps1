@@ -205,6 +205,7 @@ try {
     Require-Text $serverText 'player=Client1 count=' 'server accepted Client1'
     Require-Text $serverText 'player=Client2 count=' 'server accepted Client2'
     Require-Text $serverText 'event=AuthorityPosition' 'server emitted authoritative positions'
+    Require-Text $serverText 'event=AuthoritySnapshotComplete context=AuthorityArenaGameMode_0 count=2' 'server captured both players before disconnect'
     Require-Text $serverText 'player=Client1 x=' 'server position for Client1'
     Require-Text $serverText 'player=Client2 x=' 'server position for Client2'
     Require-Text $serverText 'role=Authority' 'server observed authority roles'

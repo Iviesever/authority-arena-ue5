@@ -103,6 +103,19 @@ void AAuthorityArenaGameMode::PostLogin(APlayerController* NewPlayer)
             TEXT("player=%s count=%d"),
             ArenaPlayerState ? *ArenaPlayerState->GetConnectionId() : TEXT("Unknown"),
             GetNumPlayers()));
+
+    FString RunId;
+    if (GetNumPlayers() >= 2 &&
+        FParse::Value(FCommandLine::Get(), TEXT("AuthorityRunId="), RunId) &&
+        !GetWorldTimerManager().IsTimerActive(AutomationSnapshotTimer))
+    {
+        GetWorldTimerManager().SetTimer(
+            AutomationSnapshotTimer,
+            this,
+            &AAuthorityArenaGameMode::CaptureAutomationSnapshot,
+            4.0f,
+            false);
+    }
 }
 
 void AAuthorityArenaGameMode::Logout(AController* Exiting)
@@ -150,8 +163,9 @@ FTransform AAuthorityArenaGameMode::ChooseSpawnTransform(const int32 PlayerIndex
     return FTransform(SpawnRotations[Index], SpawnLocations[Index]);
 }
 
-void AAuthorityArenaGameMode::FinishAutomationServerRun()
+void AAuthorityArenaGameMode::CaptureAutomationSnapshot()
 {
+    int32 SnapshotCount = 0;
     for (TActorIterator<AAuthorityArenaCharacter> It(GetWorld()); It; ++It)
     {
         const AAuthorityArenaCharacter* Character = *It;
@@ -168,6 +182,20 @@ void AAuthorityArenaGameMode::FinishAutomationServerRun()
                 Location.Y,
                 Location.Z,
                 *UAuthorityArenaNetworkDiagnosticsSubsystem::DescribeRole(Character->GetLocalRole())));
+        ++SnapshotCount;
+    }
+    bAutomationSnapshotCaptured = SnapshotCount >= 2;
+    UAuthorityArenaNetworkDiagnosticsSubsystem::EmitEvent(
+        this,
+        TEXT("AuthoritySnapshotComplete"),
+        FString::Printf(TEXT("count=%d"), SnapshotCount));
+}
+
+void AAuthorityArenaGameMode::FinishAutomationServerRun()
+{
+    if (!bAutomationSnapshotCaptured)
+    {
+        CaptureAutomationSnapshot();
     }
     if (AAuthorityArenaGameState* ArenaGameState = GetGameState<AAuthorityArenaGameState>())
     {

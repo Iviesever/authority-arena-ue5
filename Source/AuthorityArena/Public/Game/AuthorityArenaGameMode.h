@@ -25,8 +25,11 @@ public:
     FTransform ChooseSpawnTransform(int32 PlayerIndex) const;
 
 private:
+    void CaptureAutomationSnapshot();
     void FinishAutomationServerRun();
 
     int32 NextSpawnIndex = 0;
+    bool bAutomationSnapshotCaptured = false;
+    FTimerHandle AutomationSnapshotTimer;
     FTimerHandle AutomationExitTimer;
 };
