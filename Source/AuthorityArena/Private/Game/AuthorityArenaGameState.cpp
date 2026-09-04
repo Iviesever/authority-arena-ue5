@@ -14,6 +14,7 @@ void AAuthorityArenaGameState::GetLifetimeReplicatedProps(TArray<FLifetimeProper
     DOREPLIFETIME(AAuthorityArenaGameState, MatchPhase);
     DOREPLIFETIME(AAuthorityArenaGameState, RemainingSeconds);
     DOREPLIFETIME(AAuthorityArenaGameState, ScenarioRunId);
+    DOREPLIFETIME(AAuthorityArenaGameState, RoundNumber);
 }
 
 bool AAuthorityArenaGameState::SetMatchPhaseAuthority(const FName NewPhase)
@@ -49,6 +50,17 @@ bool AAuthorityArenaGameState::SetScenarioRunIdAuthority(const FString& NewRunId
     return true;
 }
 
+bool AAuthorityArenaGameState::SetRoundNumberAuthority(const int32 NewRoundNumber)
+{
+    if (!HasAuthority() || NewRoundNumber < 1)
+    {
+        return false;
+    }
+    RoundNumber = NewRoundNumber;
+    OnRep_RoundNumber();
+    return true;
+}
+
 void AAuthorityArenaGameState::MulticastMatchPulse_Implementation(const FName Pulse)
 {
     UAuthorityArenaNetworkDiagnosticsSubsystem::EmitEvent(
@@ -71,4 +83,10 @@ void AAuthorityArenaGameState::OnRep_ScenarioRunId()
 {
     UAuthorityArenaNetworkDiagnosticsSubsystem::EmitEvent(
         this, TEXT("RunIdentity"), FString::Printf(TEXT("run=%s"), *ScenarioRunId));
+}
+
+void AAuthorityArenaGameState::OnRep_RoundNumber()
+{
+    UAuthorityArenaNetworkDiagnosticsSubsystem::EmitEvent(
+        this, TEXT("Round"), FString::Printf(TEXT("number=%d"), RoundNumber));
 }

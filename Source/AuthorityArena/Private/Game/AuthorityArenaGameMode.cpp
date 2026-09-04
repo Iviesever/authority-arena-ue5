@@ -46,6 +46,7 @@ void AAuthorityArenaGameMode::BeginPlay()
             {
                 ArenaGameState->SetScenarioRunIdAuthority(RunId);
                 ArenaGameState->SetMatchPhaseAuthority(TEXT("Running"));
+                ArenaGameState->SetRoundNumberAuthority(1);
             }
             UAuthorityArenaNetworkDiagnosticsSubsystem::EmitEvent(
                 this,
