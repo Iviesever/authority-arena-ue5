@@ -25,18 +25,23 @@ $packageExecutableSha256 = $null
 $gameExecutableSha256 = $null
 $packageFingerprintSha256 = $null
 $packageSourceSha = $null
+$packageConfiguration = $null
 if ($Build -eq 'Packaged') {
     if ([string]::IsNullOrWhiteSpace($PackageManifest)) {
         throw '-PackageManifest is required when -Build Packaged.'
     }
     & (Join-Path $PSScriptRoot 'Verify-PackagedBuild.ps1') -ManifestPath $PackageManifest
     $package = Get-Content -LiteralPath (Resolve-Path -LiteralPath $PackageManifest).Path -Raw | ConvertFrom-Json
+    if ($package.configuration -ne 'Development') {
+        throw 'Packaged multi-process validation requires a Development package because UE Shipping Game builds disable command-line map/URL overrides (UE_ALLOW_MAP_OVERRIDE_IN_SHIPPING=0).'
+    }
     $processExecutable = $package.mainExecutable
     $processPrefixArguments = @()
     $packageExecutableSha256 = $package.mainExecutableSha256
     $gameExecutableSha256 = $package.gameExecutableSha256
     $packageFingerprintSha256 = $package.packageFingerprintSha256
     $packageSourceSha = $package.sourceSha
+    $packageConfiguration = $package.configuration
     if ($NetworkProfile -ne 'Baseline') {
         throw 'Packaged multi-process validation currently requires NetworkProfile Baseline so applied emulation can remain directly auditable.'
     }
@@ -244,6 +249,7 @@ function Write-ExpectedFaultReport {
         gameExecutableSha256 = $gameExecutableSha256
         packageFingerprintSha256 = $packageFingerprintSha256
         packageSourceSha = $packageSourceSha
+        packageConfiguration = $packageConfiguration
         assertions = $Assertions
         processes = @(
             [ordered]@{ role = $Server.Role; pid = $Server.Id; exitCode = $Server.Process.ExitCode },
@@ -699,6 +705,7 @@ try {
         gameExecutableSha256 = $gameExecutableSha256
         packageFingerprintSha256 = $packageFingerprintSha256
         packageSourceSha = $packageSourceSha
+        packageConfiguration = $packageConfiguration
         observations = [ordered]@{
             configuredLagMs = $network.lagMs
             configuredLagVarianceMs = $network.lagVarianceMs
