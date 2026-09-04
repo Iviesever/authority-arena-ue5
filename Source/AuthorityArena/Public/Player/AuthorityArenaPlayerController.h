@@ -10,6 +10,15 @@ class AUTHORITYARENA_API AAuthorityArenaPlayerController : public APlayerControl
     GENERATED_BODY()
 
 public:
+    AAuthorityArenaPlayerController();
+
+    virtual void BeginPlay() override;
+    virtual void Tick(float DeltaSeconds) override;
+
+    bool IsRespawnPending() const { return bRespawnPending; }
+    bool TryMarkRespawnPendingAuthority();
+    void ClearRespawnPendingAuthority();
+
     UFUNCTION(Server, Reliable)
     void ServerRequestRespawn();
 
@@ -21,4 +30,8 @@ public:
 
 private:
     uint32 LastAcceptedViewSequence = 0;
+    double AutomationStartSeconds = 0.0;
+    float AutomationRespawnRequestSeconds = 0.0f;
+    bool bAutomationRespawnRequested = false;
+    bool bRespawnPending = false;
 };

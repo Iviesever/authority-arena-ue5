@@ -1,6 +1,6 @@
 [CmdletBinding()]
 param(
-    [ValidateSet('ConnectionMovement')]
+    [ValidateSet('ConnectionMovement', 'Lifecycle')]
     [string] $Scenario = 'ConnectionMovement',
 
     [ValidateRange(20, 180)]
@@ -165,6 +165,11 @@ try {
         "-AuthorityRunId=$runId"
     )
 
+    $serverScenarioArguments = @()
+    if ($Scenario -eq 'Lifecycle') {
+        $serverScenarioArguments += '-AuthorityLifecycle'
+    }
+
     $server = Start-OwnedProcess -Role 'Server' -Executable $ue.EditorCmd -Arguments (@(
         $projectPath,
         '/Engine/Maps/Entry?listen',
@@ -172,7 +177,7 @@ try {
         "-port=$port",
         '-AuthorityExitAfter=20',
         "-abslog=$serverLog"
-    ) + $commonArguments)
+    ) + $commonArguments + $serverScenarioArguments)
     $ownedProcesses.Add($server)
     Wait-LogMarkers -OwnedProcess $server -LogPath $serverLog -Markers @(
         'IpNetDriver listening on port',
@@ -190,6 +195,10 @@ try {
     ) + $commonArguments)
     $ownedProcesses.Add($client1)
 
+    $client2ScenarioArguments = @()
+    if ($Scenario -eq 'Lifecycle') {
+        $client2ScenarioArguments += '-AuthorityRequestRespawnAfter=4'
+    }
     $client2 = Start-OwnedProcess -Role 'Client2' -Executable $ue.EditorCmd -Arguments (@(
         $projectPath,
         "127.0.0.1:$port`?PlayerId=Client2",
@@ -198,7 +207,7 @@ try {
         '-AuthorityMoveDuration=2',
         '-AuthorityExitAfter=8',
         "-abslog=$client2Log"
-    ) + $commonArguments)
+    ) + $commonArguments + $client2ScenarioArguments)
     $ownedProcesses.Add($client2)
 
     Wait-LogMarkers -OwnedProcess $client1 -LogPath $client1Log -Markers @(
@@ -233,11 +242,29 @@ try {
     Require-Text $serverText 'player=Client1 x=' 'server position for Client1'
     Require-Text $serverText 'player=Client2 x=' 'server position for Client2'
     Require-Text $serverText 'role=Authority' 'server observed authority roles'
+    Require-Text $serverText 'event=PlayerDisconnected context=AuthorityArenaGameMode_0 player=Client1' 'Client1 disconnected cleanly'
+    Require-Text $serverText 'event=PlayerDisconnected context=AuthorityArenaGameMode_0 player=Client2' 'Client2 disconnected cleanly'
     Require-Text $client1Text 'event=AutoMoveComplete' 'Client1 completed movement input'
     Require-Text $client2Text 'event=AutoMoveComplete' 'Client2 completed movement input'
     if ($client1Text.Contains('net_mode=Standalone', [StringComparison]::Ordinal) -or
         $client2Text.Contains('net_mode=Standalone', [StringComparison]::Ordinal)) {
         throw 'A client fell back into a standalone match after the authoritative server exited.'
+    }
+    $lifecycleAssertions = [ordered]@{
+        pawnDestroyed = $false
+        pawnRespawned = $false
+        disconnectedCleanly = $true
+    }
+    if ($Scenario -eq 'Lifecycle') {
+        Require-Text $serverText 'event=PawnDestroyed context=AuthorityArenaGameMode_0 player=Client2' 'Client2 pawn destroyed by authority'
+        Require-Text $serverText 'event=PawnRespawned context=AuthorityArenaGameMode_0 player=Client2' 'Client2 pawn respawned by authority'
+        $destroyCount = ([regex]::Matches($serverText, 'event=PawnDestroyed .*player=Client2')).Count
+        $respawnCount = ([regex]::Matches($serverText, 'event=PawnRespawned .*player=Client2')).Count
+        if ($destroyCount -ne 1 -or $respawnCount -ne 1) {
+            throw "Lifecycle must destroy and respawn exactly once; destroyed=$destroyCount respawned=$respawnCount"
+        }
+        $lifecycleAssertions.pawnDestroyed = $true
+        $lifecycleAssertions.pawnRespawned = $true
     }
 
     $client1Position = [regex]::Match($serverText, 'event=AuthorityPosition.*player=Client1 x=(-?\d+(?:\.\d+)?)')
@@ -274,6 +301,7 @@ try {
             client1AuthorityX = $client1X
             client2AuthorityX = $client2X
             movementOccurred = $true
+            lifecycle = $lifecycleAssertions
         }
         processes = @(
             [ordered]@{ role = $server.Role; pid = $server.Id; executable = $server.Executable; exitCode = $server.Process.ExitCode },

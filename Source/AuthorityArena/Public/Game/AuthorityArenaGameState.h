@@ -22,6 +22,9 @@ public:
     bool SetRemainingSecondsAuthority(int32 NewRemainingSeconds);
     bool SetScenarioRunIdAuthority(const FString& NewRunId);
 
+    UFUNCTION(NetMulticast, Unreliable)
+    void MulticastMatchPulse(FName Pulse);
+
 private:
     UFUNCTION()
     void OnRep_MatchPhase();

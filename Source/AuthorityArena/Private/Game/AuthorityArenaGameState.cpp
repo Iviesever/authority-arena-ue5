@@ -49,6 +49,12 @@ bool AAuthorityArenaGameState::SetScenarioRunIdAuthority(const FString& NewRunId
     return true;
 }
 
+void AAuthorityArenaGameState::MulticastMatchPulse_Implementation(const FName Pulse)
+{
+    UAuthorityArenaNetworkDiagnosticsSubsystem::EmitEvent(
+        this, TEXT("MatchPulse"), FString::Printf(TEXT("pulse=%s"), *Pulse.ToString()));
+}
+
 void AAuthorityArenaGameState::OnRep_MatchPhase()
 {
     UAuthorityArenaNetworkDiagnosticsSubsystem::EmitEvent(

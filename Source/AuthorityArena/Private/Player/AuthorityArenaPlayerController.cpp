@@ -1,6 +1,61 @@
 #include "Player/AuthorityArenaPlayerController.h"
 
 #include "Diagnostics/AuthorityArenaNetworkDiagnosticsSubsystem.h"
+#include "Engine/World.h"
+#include "Game/AuthorityArenaGameMode.h"
+
+AAuthorityArenaPlayerController::AAuthorityArenaPlayerController()
+{
+    PrimaryActorTick.bCanEverTick = true;
+}
+
+void AAuthorityArenaPlayerController::BeginPlay()
+{
+    Super::BeginPlay();
+    AutomationStartSeconds = GetWorld() != nullptr ? GetWorld()->GetTimeSeconds() : 0.0;
+    FParse::Value(
+        FCommandLine::Get(),
+        TEXT("AuthorityRequestRespawnAfter="),
+        AutomationRespawnRequestSeconds);
+}
+
+void AAuthorityArenaPlayerController::Tick(const float DeltaSeconds)
+{
+    Super::Tick(DeltaSeconds);
+    if (bAutomationRespawnRequested ||
+        AutomationRespawnRequestSeconds <= 0.0f ||
+        GetWorld() == nullptr ||
+        GetNetMode() != NM_Client ||
+        !IsLocalController())
+    {
+        return;
+    }
+
+    if (GetWorld()->GetTimeSeconds() - AutomationStartSeconds >= AutomationRespawnRequestSeconds)
+    {
+        bAutomationRespawnRequested = true;
+        UAuthorityArenaNetworkDiagnosticsSubsystem::EmitEvent(this, TEXT("RespawnRequested"));
+        ServerRequestRespawn();
+    }
+}
+
+bool AAuthorityArenaPlayerController::TryMarkRespawnPendingAuthority()
+{
+    if (!HasAuthority() || bRespawnPending)
+    {
+        return false;
+    }
+    bRespawnPending = true;
+    return true;
+}
+
+void AAuthorityArenaPlayerController::ClearRespawnPendingAuthority()
+{
+    if (HasAuthority())
+    {
+        bRespawnPending = false;
+    }
+}
 
 void AAuthorityArenaPlayerController::ServerRequestRespawn_Implementation()
 {
@@ -9,7 +64,14 @@ void AAuthorityArenaPlayerController::ServerRequestRespawn_Implementation()
         ClientRequestRejected(TEXT("Respawn"), TEXT("NotDead"));
         return;
     }
-    ClientRequestRejected(TEXT("Respawn"), TEXT("NotImplementedInPACT10"));
+    if (AAuthorityArenaGameMode* GameMode = GetWorld() != nullptr
+            ? GetWorld()->GetAuthGameMode<AAuthorityArenaGameMode>()
+            : nullptr)
+    {
+        GameMode->RequestRespawn(this);
+        return;
+    }
+    ClientRequestRejected(TEXT("Respawn"), TEXT("NoAuthorityGameMode"));
 }
 
 void AAuthorityArenaPlayerController::ServerReportViewSample_Implementation(

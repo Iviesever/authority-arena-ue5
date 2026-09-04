@@ -2,7 +2,7 @@
 
 ## Current state
 
-- Active phase: PACT-00 complete; PACT-10 implementation and exploratory real-process run are green. Clean-commit rerun and evidence publication remain.
+- Active phase: PACT-00 complete; PACT-10 replication, movement, RPC/RepNotify/Multicast, and lifecycle are implemented. Clean-commit three-check rerun and evidence publication remain.
 - Release eligibility: not eligible; no project build or P0 runtime verification has passed.
 - Remote repository: public `https://github.com/Iviesever/authority-arena-ue5`; `main` contains governance commit `acacf93d37dd246161b8b397c499b93acc031a68`.
 - Local repository: current branch `feat/authority-arena-0.1` tracks its same-name origin branch; it was created from `origin/main` at `e35df954166ff558b824ce41386c26a68f684d24`.
@@ -18,7 +18,7 @@
 
 ## Next exact action
 
-Commit and push the PACT-10 implementation, rerun Automation and `ConnectionMovement` from that clean commit, then publish the compact report and close PACT-10.
+Commit and push the PACT-10 lifecycle implementation, rerun Automation plus `ConnectionMovement` and `Lifecycle` from that clean commit, then publish compact reports and close PACT-10.
 
 ## Safety boundary
 

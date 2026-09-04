@@ -116,6 +116,14 @@ void AAuthorityArenaGameMode::PostLogin(APlayerController* NewPlayer)
             4.0f,
             false);
     }
+    if (GetNumPlayers() >= 2)
+    {
+        if (AAuthorityArenaGameState* ArenaGameState = GetGameState<AAuthorityArenaGameState>())
+        {
+            ArenaGameState->MulticastMatchPulse(TEXT("PlayersReady"));
+        }
+        ScheduleAutomationLifecycle();
+    }
 }
 
 void AAuthorityArenaGameMode::Logout(AController* Exiting)
@@ -128,6 +136,16 @@ void AAuthorityArenaGameMode::Logout(AController* Exiting)
         FString::Printf(
             TEXT("player=%s"),
             ArenaPlayerState ? *ArenaPlayerState->GetConnectionId() : TEXT("Unknown")));
+    if (AAuthorityArenaPlayerController* ArenaController = Cast<AAuthorityArenaPlayerController>(Exiting))
+    {
+        const TWeakObjectPtr<AAuthorityArenaPlayerController> WeakController(ArenaController);
+        if (FTimerHandle* Timer = RespawnTimers.Find(WeakController))
+        {
+            GetWorldTimerManager().ClearTimer(*Timer);
+            RespawnTimers.Remove(WeakController);
+        }
+        ArenaController->ClearRespawnPendingAuthority();
+    }
     Super::Logout(Exiting);
 }
 
@@ -161,6 +179,95 @@ FTransform AAuthorityArenaGameMode::ChooseSpawnTransform(const int32 PlayerIndex
 
     const int32 Index = FMath::Abs(PlayerIndex) % UE_ARRAY_COUNT(SpawnLocations);
     return FTransform(SpawnRotations[Index], SpawnLocations[Index]);
+}
+
+void AAuthorityArenaGameMode::RequestRespawn(AAuthorityArenaPlayerController* Controller)
+{
+    if (!IsValid(Controller) || Controller->GetPawn() != nullptr)
+    {
+        if (IsValid(Controller))
+        {
+            Controller->ClientRequestRejected(TEXT("Respawn"), TEXT("NotDead"));
+        }
+        return;
+    }
+    if (!Controller->TryMarkRespawnPendingAuthority())
+    {
+        Controller->ClientRequestRejected(TEXT("Respawn"), TEXT("RespawnPending"));
+        return;
+    }
+
+    const TWeakObjectPtr<AAuthorityArenaPlayerController> WeakController(Controller);
+    FTimerHandle& Timer = RespawnTimers.FindOrAdd(WeakController);
+    GetWorldTimerManager().SetTimer(
+        Timer,
+        FTimerDelegate::CreateWeakLambda(this, [this, WeakController]()
+        {
+            AAuthorityArenaPlayerController* StrongController = WeakController.Get();
+            RespawnTimers.Remove(WeakController);
+            if (!IsValid(StrongController))
+            {
+                return;
+            }
+            StrongController->ClearRespawnPendingAuthority();
+            RestartPlayer(StrongController);
+            const AAuthorityArenaPlayerState* PlayerState =
+                StrongController->GetPlayerState<AAuthorityArenaPlayerState>();
+            UAuthorityArenaNetworkDiagnosticsSubsystem::EmitEvent(
+                this,
+                TEXT("PawnRespawned"),
+                FString::Printf(
+                    TEXT("player=%s pawn=%s"),
+                    PlayerState ? *PlayerState->GetConnectionId() : TEXT("Unknown"),
+                    *GetNameSafe(StrongController->GetPawn())));
+            CaptureAutomationSnapshot();
+        }),
+        1.0f,
+        false);
+}
+
+void AAuthorityArenaGameMode::ScheduleAutomationLifecycle()
+{
+    if (bAutomationLifecycleScheduled ||
+        !FParse::Param(FCommandLine::Get(), TEXT("AuthorityLifecycle")))
+    {
+        return;
+    }
+    bAutomationLifecycleScheduled = true;
+    GetWorldTimerManager().SetTimer(
+        AutomationLifecycleTimer,
+        this,
+        &AAuthorityArenaGameMode::DestroyAutomationPawn,
+        1.5f,
+        false);
+}
+
+void AAuthorityArenaGameMode::DestroyAutomationPawn()
+{
+    for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
+    {
+        AAuthorityArenaPlayerController* Controller = Cast<AAuthorityArenaPlayerController>(It->Get());
+        AAuthorityArenaPlayerState* PlayerState =
+            IsValid(Controller) ? Controller->GetPlayerState<AAuthorityArenaPlayerState>() : nullptr;
+        if (!IsValid(PlayerState) || PlayerState->GetConnectionId() != TEXT("Client2"))
+        {
+            continue;
+        }
+
+        APawn* Pawn = Controller->GetPawn();
+        if (!IsValid(Pawn))
+        {
+            return;
+        }
+        const FString PawnName = Pawn->GetName();
+        Controller->UnPossess();
+        Pawn->Destroy();
+        UAuthorityArenaNetworkDiagnosticsSubsystem::EmitEvent(
+            this,
+            TEXT("PawnDestroyed"),
+            FString::Printf(TEXT("player=Client2 pawn=%s"), *PawnName));
+        return;
+    }
 }
 
 void AAuthorityArenaGameMode::CaptureAutomationSnapshot()

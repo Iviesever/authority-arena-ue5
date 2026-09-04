@@ -4,6 +4,8 @@
 #include "GameFramework/GameModeBase.h"
 #include "AuthorityArenaGameMode.generated.h"
 
+class AAuthorityArenaPlayerController;
+
 UCLASS()
 class AUTHORITYARENA_API AAuthorityArenaGameMode : public AGameModeBase
 {
@@ -23,13 +25,19 @@ public:
     virtual void RestartPlayer(AController* NewPlayer) override;
 
     FTransform ChooseSpawnTransform(int32 PlayerIndex) const;
+    void RequestRespawn(AAuthorityArenaPlayerController* Controller);
 
 private:
     void CaptureAutomationSnapshot();
+    void ScheduleAutomationLifecycle();
+    void DestroyAutomationPawn();
     void FinishAutomationServerRun();
 
     int32 NextSpawnIndex = 0;
     bool bAutomationSnapshotCaptured = false;
+    bool bAutomationLifecycleScheduled = false;
     FTimerHandle AutomationSnapshotTimer;
+    FTimerHandle AutomationLifecycleTimer;
     FTimerHandle AutomationExitTimer;
+    TMap<TWeakObjectPtr<AAuthorityArenaPlayerController>, FTimerHandle> RespawnTimers;
 };

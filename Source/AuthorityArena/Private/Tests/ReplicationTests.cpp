@@ -44,6 +44,14 @@ bool FAuthorityArenaReplicationContractTest::RunTest(const FString& Parameters)
         AAuthorityArenaGameState::StaticClass(), TEXT("RemainingSeconds")));
     TestTrue(TEXT("ScenarioRunId is RepNotify"), IsRepNotifyProperty(
         AAuthorityArenaGameState::StaticClass(), TEXT("ScenarioRunId")));
+    TestTrue(TEXT("Match pulse is an unreliable multicast"), HasRpcFlags(
+        AAuthorityArenaGameState::StaticClass(),
+        TEXT("MulticastMatchPulse"),
+        FUNC_Net | FUNC_NetMulticast));
+    const UFunction* MatchPulse = AAuthorityArenaGameState::StaticClass()->FindFunctionByName(
+        TEXT("MulticastMatchPulse"));
+    TestTrue(TEXT("Match pulse is explicitly not reliable"),
+        MatchPulse != nullptr && !MatchPulse->HasAnyFunctionFlags(FUNC_NetReliable));
 
     const AAuthorityArenaPlayerState* PlayerState = GetDefault<AAuthorityArenaPlayerState>();
     TestEqual(TEXT("Default connection id"), PlayerState->GetConnectionId(), FString());
@@ -72,6 +80,9 @@ bool FAuthorityArenaReplicationContractTest::RunTest(const FString& Parameters)
         AAuthorityArenaPlayerController::StaticClass(),
         TEXT("ClientRequestRejected"),
         FUNC_Net | FUNC_NetClient | FUNC_NetReliable));
+    TestFalse(
+        TEXT("Respawn is not pending by default"),
+        GetDefault<AAuthorityArenaPlayerController>()->IsRespawnPending());
 
     const AAuthorityArenaCharacter* Character = GetDefault<AAuthorityArenaCharacter>();
     TestTrue(TEXT("Character actor replicates"), Character->GetIsReplicated());

@@ -160,3 +160,12 @@ Result: exit `1` at missing `CoreMinimal.h`. MQB does not reconstruct `.uproject
 - Both clients observed AutonomousProxy and SimulatedProxy. The server observed Authority and two connected IDs. Authoritative X positions were Client1 `61.17` from `-600` spawn and Client2 `145.17` from `600` spawn.
 - No UnrealEditor, UBT, ShaderCompileWorker, CrashReportClient, or LiveCodingConsole process remained.
 - This first pass was generated from an uncommitted worktree and is development evidence only. A clean feature-commit rerun is required before PACT-10 rows become PASS/source-bound.
+
+## 2026-09-05 00:00 UTC+8 — PACT-10 lifecycle RED/GREEN
+
+- Lifecycle RED: reflection test failed to compile because the respawn pending API and match multicast were absent.
+- Implemented an unreliable, presentation-only `MulticastMatchPulse`; PlayerController-owned respawn pending gate; reliable respawn request; weak, cancellable GameMode timers; and Logout cleanup.
+- Real Lifecycle run `528914e684d245b6926c117a1872b5b5` on UDP port 55110 passed with three exit-0 PIDs.
+- Server evidence: `PawnDestroyed player=Client2` once, `PawnRespawned player=Client2` once, an intermediate snapshot count 1, then a post-respawn authority snapshot count 2.
+- Client2 emitted `RespawnRequested`; all three processes observed `MatchPulse`; both clients disconnected; no related process remained.
+- This run was dirty development evidence. A clean-commit Automation + ConnectionMovement + Lifecycle matrix remains required.
